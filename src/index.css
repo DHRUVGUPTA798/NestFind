@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+/* ============================================================
+   NextFind – Final Production Design System
+   Brand: Navy (#19336B) + Emerald (#07966F)
+   Surface: Warm Background (#FAFAF7), Soft (#F1F3F5), Borders (#E7E9ED)
+   Typography: Manrope
+   ============================================================ */
+
+@theme {
+  /* ── Brand Navy: Core #19336B ────────────────────────────── */
+  --color-brand-50:  #f0f3fa;
+  --color-brand-100: #e0e7f4;
+  --color-brand-200: #c2d0e9;
+  --color-brand-300: #9cb4dc;
+  --color-brand-400: #6b8ec7;
+  --color-brand-500: #4269ad;
+  --color-brand-600: #294e92;
+  --color-brand-700: #19336b; /* Canonical Primary Navy */
+  --color-brand-800: #142854;
+  --color-brand-900: #0f1d3e;
+  --color-brand-950: #091227;
+
+  /* ── Emerald Accent: Core #07966F ────────────────────────── */
+  --color-emerald-50:  #edfbf6;
+  --color-emerald-100: #d4f5e9;
+  --color-emerald-200: #a9ecd3;
+  --color-emerald-300: #71ddb6;
+  --color-emerald-400: #35c494;
+  --color-emerald-500: #14ab7f;
+  --color-emerald-600: #07966f; /* Canonical Emerald Accent */
+  --color-emerald-700: #08775a;
+  --color-emerald-800: #0a5f49;
+  --color-emerald-900: #094e3d;
+
+  /* ── Neutrals & Surfaces (Warm & Clean) ──────────────────── */
+  --color-stone-50:  #fafaf7; /* Canonical Warm Background */
+  --color-stone-100: #f1f3f5; /* Canonical Soft Surface */
+  --color-stone-200: #e7e9ed; /* Canonical Borders */
+  --color-stone-300: #d6dae0;
+  --color-stone-400: #a3abb9;
+  --color-stone-500: #737985; /* Canonical Secondary Text */
+  --color-stone-600: #585e6b;
+  --color-stone-700: #404653;
+  --color-stone-800: #2d333f;
+  --color-stone-900: #242936; /* Canonical Primary Text */
+
+  /* ── Semantic Colors ─────────────────────────────────────── */
+  --color-success: #07966f;
+  --color-warning: #d97706;
+  --color-error:   #dc2626;
+
+  /* ── Typography (Single unified family: Manrope) ────────── */
+  --font-sans:    'Manrope', system-ui, -apple-system, sans-serif;
+  --font-display: 'Manrope', system-ui, -apple-system, sans-serif;
+
+  /* ── Radii Scale ─────────────────────────────────────────── */
+  --radius-xs:  0.25rem;
+  --radius-sm:  0.375rem;
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 380ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   RESET & FOUNDATION
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem; /* 15px - optimal readability */
+  line-height: 1.6;
+  color: var(--color-stone-900);
+  background-color: var(--color-stone-50);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+#root { min-height: 100vh; }
+
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 3px;
+}
+
+section[id] { scroll-margin-top: 5.5rem; }
+
+img, video {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* ============================================================
+   CONTAINER & LAYOUT
+   ============================================================ */
+.container-xl {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+@media (min-width: 640px)  { .container-xl { padding-inline: 1.5rem; } }
+@media (min-width: 1024px) { .container-xl { padding-inline: 2rem; } }
+
+/* Display font alias */
+.font-display { font-family: var(--font-display); }
+
+/* Focus ring for accessible keyboard navigation */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brand-700);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-stone-300);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-stone-400); }
+
+/* ============================================================
+   ANIMATIONS & TRANSITIONS
+   ============================================================ */
+.page-enter {
+  animation: pageFadeIn 280ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-stone-100) 25%,
+    var(--color-stone-200) 50%,
+    var(--color-stone-100) 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0px);  }
+  50%       { transform: translateY(-6px); }
+}
+.animate-float { animation: floatSoft 4.5s ease-in-out infinite; }
+
+/* ============================================================
+   SHARED REFINED COMPONENT STYLES
+   ============================================================ */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.875rem;
+  border-radius: 9999px;
+  background: var(--color-emerald-50);
+  color: var(--color-emerald-700);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-emerald-200);
+}
+
+.property-card {
+  background: #ffffff;
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--color-stone-200);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.property-card:focus-within {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 3px;
+}
+
+.property-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-stone-300);
+  box-shadow: 0 16px 36px -8px rgba(25, 51, 107, 0.08), 0 4px 12px -2px rgba(25, 51, 107, 0.04);
+}
+
+.property-card:hover .card-image {
+  transform: scale(1.05);
+}
+
+.card-image {
+  transition: transform 450ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
