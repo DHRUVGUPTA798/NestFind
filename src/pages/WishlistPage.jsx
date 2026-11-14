@@ -16,7 +16,7 @@ export default function WishlistPage() {
   }, [wishlist])
 
   return (
-    <div className="bg-[#f8f9fb] min-h-[calc(100vh-72px)] py-8 sm:py-12 page-enter">
+    <div className="bg-stone-50 min-h-[calc(100vh-72px)] py-8 sm:py-12 page-enter">
       <div className="container-xl">
 
         {/* Section Header */}

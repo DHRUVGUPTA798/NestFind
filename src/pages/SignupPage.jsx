@@ -42,7 +42,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-[#f8f9fb] py-12 px-4 page-enter">
+    <div className="min-h-[calc(100vh-72px)] flex items-center justify-center bg-stone-50 py-12 px-4 page-enter">
       <div className="w-full max-w-md bg-white p-8 rounded-2xl border border-stone-200 shadow-md">
 
         {/* Brand Icon Header */}

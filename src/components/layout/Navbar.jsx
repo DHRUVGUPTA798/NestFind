@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, X, Heart, ChevronDown, User, LogOut, LayoutDashboard, MessageSquare, Home, PlusCircle } from 'lucide-react'
+import { Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, MessageSquare, Home, PlusCircle } from 'lucide-react'
 import { useScrolled } from '../../hooks/useScrollPosition'
 import { useAuth } from '../../context/AuthContext'
 import { useWishlist } from '../../context/WishlistContext'
@@ -31,10 +31,22 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  useEffect(() => {
+    function closeMenus(event) {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        setUserMenuOpen(false)
+      }
+    }
+    window.addEventListener('keydown', closeMenus)
+    return () => window.removeEventListener('keydown', closeMenus)
+  }, [])
+
   // Prevent scroll lock issues
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    const previousOverflow = document.body.style.overflow
+    if (menuOpen) document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
   }, [menuOpen])
 
   const handleLogout = async () => {
@@ -51,7 +63,7 @@ export default function Navbar() {
           'fixed top-0 inset-x-0 z-50 transition-all duration-200',
           scrolled
             ? 'bg-white/95 backdrop-blur-md border-b border-stone-200/90 shadow-[0_2px_16px_-4px_rgba(25,51,107,0.06)]'
-            : 'bg-[#fafaf7] border-b border-stone-200/60'
+            : 'bg-stone-50 border-b border-stone-200/60'
         )}
       >
         <div className="container-xl">
@@ -75,7 +87,7 @@ export default function Navbar() {
             </div>
 
             {/* ── Center: Navigation Links ──────────── */}
-            <nav className="hidden md:flex items-center gap-1.5">
+            <nav className="hidden lg:flex items-center gap-1.5">
               {navLinks.map(({ to, label }) => (
                 <NavLink
                   key={to}
@@ -102,7 +114,7 @@ export default function Navbar() {
             </nav>
 
             {/* ── Right: Owner CTA + Auth Actions ──── */}
-            <div className="hidden md:flex items-center gap-3">
+            <div className="hidden lg:flex items-center gap-3">
               {/* Secondary CTA: List Your Property */}
               <Link
                 to="/owner/add-property"
@@ -210,8 +222,10 @@ export default function Navbar() {
             {/* ── Mobile Hamburger ─────────────────── */}
             <button
               onClick={() => setMenuOpen(v => !v)}
-              className="md:hidden flex items-center justify-center size-10 rounded-lg text-stone-700 hover:bg-stone-100"
+              className="lg:hidden flex items-center justify-center size-10 rounded-lg text-stone-700 hover:bg-stone-100"
               aria-label="Toggle navigation"
+              aria-expanded={menuOpen}
+              aria-controls="mobile-navigation"
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -221,12 +235,12 @@ export default function Navbar() {
 
       {/* ── Mobile Navigation Drawer ──────────── */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
+        <div id="mobile-navigation" className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Main navigation">
           <div
             className="absolute inset-0 bg-stone-900/40 backdrop-blur-xs"
             onClick={() => setMenuOpen(false)}
           />
-          <div className="absolute top-[72px] inset-x-0 bottom-0 bg-[#fafaf7] overflow-y-auto px-5 py-6 flex flex-col justify-between">
+          <div className="absolute top-[72px] inset-x-0 bottom-0 bg-stone-50 overflow-y-auto px-5 py-6 flex flex-col justify-between">
             <div className="space-y-1">
               {navLinks.map(({ to, label }) => (
                 <NavLink

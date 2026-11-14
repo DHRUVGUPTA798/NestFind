@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Star, MapPin, Bed, Bath, Square, Heart, CheckCircle2 } from 'lucide-react'
 import { useWishlist } from '../../context/WishlistContext'
 import { cn } from '../../utils/cn'
@@ -15,30 +15,19 @@ export function formatRupee(amount) {
 export default function PropertyCard({ property }) {
   const { toggle, isWishlisted } = useWishlist()
   const wishlisted = isWishlisted(property.id)
-  const navigate = useNavigate()
 
   return (
-    <article
-      onClick={() => navigate(`/property/${property.id}`)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          navigate(`/property/${property.id}`)
-        }
-      }}
-      role="link"
-      tabIndex={0}
-      aria-label={`View ${property.title}`}
-      className="property-card group bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between cursor-pointer"
-    >
+    <article className="property-card group">
       {/* Visual Media Header */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
-        <img
-          src={property.images[0]}
-          alt={property.title}
-          className="card-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
+      <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
+        <Link to={`/property/${property.id}`} className="block h-full w-full" aria-label={`View ${property.title}`}>
+          <img
+            src={property.images[0]}
+            alt={property.title}
+            className="card-image w-full h-full object-cover"
+            loading="lazy"
+          />
+        </Link>
 
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30 pointer-events-none" />
 
@@ -68,6 +57,7 @@ export default function PropertyCard({ property }) {
               : 'bg-white/90 text-stone-500 hover:text-rose-600 hover:bg-white shadow-xs'
           )}
           aria-label={wishlisted ? 'Remove from saved' : 'Save to wishlist'}
+          aria-pressed={wishlisted}
         >
           <Heart size={14} className={wishlisted ? 'fill-current' : ''} />
         </button>
@@ -75,7 +65,7 @@ export default function PropertyCard({ property }) {
         {/* Price Tag Overlay */}
         <div className="absolute bottom-3 left-3 z-10">
           <div className="inline-flex items-baseline px-2.5 py-1 rounded-lg bg-brand-700/95 text-white shadow-sm backdrop-blur-xs">
-            <span className="text-sm font-extrabold tracking-tight">
+            <span className="text-base font-bold tracking-tight">
               {formatRupee(property.price)}
             </span>
             <span className="text-[10px] font-medium text-stone-200 ml-1">/ month</span>
@@ -88,7 +78,7 @@ export default function PropertyCard({ property }) {
         <div>
           {/* Title and Rating */}
           <div className="flex items-start justify-between gap-2 mb-1.5">
-            <h3 className="text-[15px] font-bold text-stone-900 leading-snug line-clamp-2 group-hover:text-brand-700 transition-colors">
+            <h3 className="text-base font-bold text-stone-900 leading-snug line-clamp-2 group-hover:text-brand-700 transition-colors">
               <Link to={`/property/${property.id}`} className="focus-ring rounded-sm">
                 {property.title}
               </Link>
@@ -102,14 +92,14 @@ export default function PropertyCard({ property }) {
           </div>
 
           {/* Location Area */}
-          <div className="flex items-center gap-1.5 text-xs text-stone-500 mb-3">
+          <div className="flex items-center gap-1.5 text-sm text-stone-500 mb-4">
             <MapPin size={12} className="text-stone-400 shrink-0" />
             <span className="truncate">{property.location.area}, {property.location.city}</span>
           </div>
         </div>
 
         {/* Structural Metrics Footer */}
-        <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] font-semibold text-stone-600">
+        <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2 text-xs font-semibold text-stone-600">
           <span className="flex items-center gap-1">
             <Bed size={13} className="text-stone-400" />
             {property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}

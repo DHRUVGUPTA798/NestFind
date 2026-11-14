@@ -1,13 +1,11 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
-  Search, MapPin, ChevronRight, Star, Shield,
-  CheckCircle2, TrendingUp, Bed, Bath, Square,
-  Heart, ArrowRight, Building2, Home, Users, Layers,
-  Sparkles, SlidersHorizontal, Check, Clock, UserCheck
+  Search, MapPin, ChevronRight, Shield, CheckCircle2,
+  Heart, ArrowRight, Building2, Check, Clock, UserCheck
 } from 'lucide-react'
 import { mockProperties } from '../data/mock/properties'
-import { useWishlist } from '../context/WishlistContext'
+import PropertyCard, { formatRupee } from '../components/property/PropertyCard'
 import { cn } from '../utils/cn'
 
 /* ─────────────────────────────────────────────
@@ -26,28 +24,24 @@ const categories = [
     label: 'Rooms',
     subtext: 'Single & shared furnished rooms',
     image: 'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=600&q=85&fit=crop',
-    tag: 'From ₹6,500/mo',
   },
   {
     type: 'flat',
     label: 'Apartments',
     subtext: '1BHK, 2BHK & 3BHK flats',
     image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&q=85&fit=crop',
-    tag: 'From ₹18,000/mo',
   },
   {
     type: 'house',
     label: 'Independent Houses',
     subtext: 'Stand-alone villas & houses',
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=85&fit=crop',
-    tag: 'From ₹35,000/mo',
   },
   {
     type: 'pg',
     label: 'PG / Hostels',
     subtext: 'Student & executive stays with food',
     image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=600&q=85&fit=crop',
-    tag: 'From ₹7,500/mo',
   },
 ]
 
@@ -62,130 +56,24 @@ const FILTER_TABS = [
   { label: 'PGs', value: 'pg' },
 ]
 
-function formatRupee(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount)
+function categoryPriceLabel(type) {
+  const prices = mockProperties.filter((property) => property.type === type).map((property) => property.price)
+  if (!prices.length) return 'Explore available options'
+  return `From ${formatRupee(Math.min(...prices))}/mo`
 }
 
 /* ─────────────────────────────────────────────
    INDIVIDUAL PROPERTY CARD COMPONENT
    ─────────────────────────────────────────── */
 function ListingCard({ property }) {
-  const { toggle, isWishlisted } = useWishlist()
-  const wishlisted = isWishlisted(property.id)
-  const navigate = useNavigate()
-
-  return (
-    <div
-      onClick={() => navigate(`/property/${property.id}`)}
-      className="property-card group cursor-pointer"
-    >
-      {/* Visual Header */}
-      <div className="relative aspect-[16/10] overflow-hidden bg-stone-100">
-        <img
-          src={property.images[0]}
-          alt={property.title}
-          className="card-image w-full h-full object-cover"
-          loading="lazy"
-        />
-
-        {/* Gradient Scrim for Top Badges */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30 pointer-events-none" />
-
-        {/* Verification & Category Badges */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-          {property.isVerified && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white/95 text-[11px] font-bold text-emerald-700 shadow-xs backdrop-blur-xs">
-              <CheckCircle2 size={12} className="text-emerald-600" /> Verified
-            </span>
-          )}
-          <span className="inline-flex items-center px-2 py-1 rounded-md bg-stone-900/80 text-[10px] font-semibold text-white backdrop-blur-xs">
-            {property.propertyTypeName || property.type}
-          </span>
-        </div>
-
-        {/* Wishlist Button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            toggle(property.id)
-          }}
-          className={cn(
-            'absolute top-3 right-3 z-10 size-8 rounded-full flex items-center justify-center transition-all duration-150 backdrop-blur-xs',
-            wishlisted
-              ? 'bg-rose-600 text-white shadow-md scale-105'
-              : 'bg-white/90 text-stone-500 hover:text-rose-600 hover:bg-white shadow-xs'
-          )}
-          aria-label={wishlisted ? 'Remove from saved' : 'Save to wishlist'}
-        >
-          <Heart size={14} className={wishlisted ? 'fill-current' : ''} />
-        </button>
-
-        {/* Price Tag Overlay on Bottom of Image */}
-        <div className="absolute bottom-3 left-3 z-10">
-          <div className="inline-flex items-baseline px-2.5 py-1 rounded-lg bg-brand-700/95 text-white shadow-sm backdrop-blur-xs">
-            <span className="text-sm font-extrabold tracking-tight">
-              {formatRupee(property.price)}
-            </span>
-            <span className="text-[10px] font-medium text-stone-200 ml-1">/ month</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Body Content */}
-      <div className="p-4 flex flex-col flex-1 justify-between bg-white">
-        <div>
-          {/* Title and Rating */}
-          <div className="flex items-start justify-between gap-2 mb-1.5">
-            <h3 className="text-[14px] font-bold text-stone-900 leading-snug line-clamp-1 group-hover:text-brand-700 transition-colors">
-              {property.title}
-            </h3>
-            {property.rating && (
-              <div className="flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200/60">
-                <Star size={11} className="text-amber-500 fill-amber-500" />
-                <span className="text-[11px] font-bold text-amber-900">{property.rating}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Location Area */}
-          <div className="flex items-center gap-1.5 text-xs text-stone-500 mb-3">
-            <MapPin size={12} className="text-stone-400 shrink-0" />
-            <span className="truncate">{property.location.area}, {property.location.city}</span>
-          </div>
-        </div>
-
-        {/* Structural Metrics Footer */}
-        <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] font-semibold text-stone-600">
-          <span className="flex items-center gap-1">
-            <Bed size={13} className="text-stone-400" />
-            {property.bedrooms} {property.bedrooms === 1 ? 'Bed' : 'Beds'}
-          </span>
-          <span className="text-stone-300">•</span>
-          <span className="flex items-center gap-1">
-            <Bath size={13} className="text-stone-400" />
-            {property.bathrooms} {property.bathrooms === 1 ? 'Bath' : 'Baths'}
-          </span>
-          <span className="text-stone-300">•</span>
-          <span className="flex items-center gap-1">
-            <Square size={13} className="text-stone-400" />
-            {property.area} sqft
-          </span>
-        </div>
-      </div>
-    </div>
-  )
+  return <PropertyCard property={property} />
 }
 
-/* ─────────────────────────────────────────────
-   MAIN HOMEPAGE
-   ─────────────────────────────────────────── */
 export default function HomePage() {
   const navigate = useNavigate()
+  const featuredProperty = mockProperties.find((property) => property.id === '3') || mockProperties[0]
+  const cityCount = new Set(mockProperties.map((property) => property.location.city)).size
+  const categoryCount = new Set(mockProperties.map((property) => property.type)).size
 
   // Search form states
   const [searchLocation, setSearchLocation] = useState('')
@@ -216,9 +104,9 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION — 2-Column Balanced Architecture
           ══════════════════════════════════════════════════════ */}
-      <section className="relative bg-[#fafaf7] pt-8 pb-14 md:pt-12 md:pb-20 border-b border-stone-200/60 overflow-hidden">
+      <section className="relative bg-stone-50 pt-10 pb-14 sm:pt-14 lg:pt-16 lg:pb-20 border-b border-stone-200/70 overflow-hidden">
         <div className="container-xl">
-          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
 
             {/* Left Column: Heading, Value Prop, Search Box */}
             <div className="lg:col-span-7 flex flex-col justify-center">
@@ -232,28 +120,28 @@ export default function HomePage() {
               </div>
 
               {/* Main Headline */}
-              <h1 className="font-extrabold text-3xl sm:text-4xl lg:text-[2.9rem] text-stone-900 tracking-tight leading-[1.18] mb-4">
+              <h1 className="font-extrabold text-display text-stone-900 tracking-[-0.04em] leading-[1.08] mb-5">
                 Find a Place You'll <br className="hidden sm:inline" />
                 <span className="text-brand-700">Love to Call Home.</span>
               </h1>
 
               {/* Supporting Description */}
-              <p className="text-sm sm:text-base text-stone-600 leading-relaxed mb-8 max-w-xl">
+              <p className="text-base sm:text-lg text-stone-600 leading-relaxed mb-8 max-w-xl">
                 Discover thoughtfully selected rooms, apartments and homes that match your lifestyle and budget. Direct owner connections, zero broker markups, and transparent leases.
               </p>
 
               {/* ── SEARCH MODULE (Responsive Horizontal on Desktop, Stacked on Mobile) ── */}
               <form
                 onSubmit={handleSearchSubmit}
-                className="bg-white p-2.5 sm:p-3 rounded-2xl border border-stone-200 shadow-[0_8px_30px_rgb(25,51,107,0.06)] mb-7"
+                className="bg-white p-3 sm:p-4 rounded-2xl border border-stone-200 shadow-[0_16px_42px_-24px_rgba(25,51,107,0.32)] mb-7"
               >
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
 
                   {/* Location Input */}
-                  <div className="sm:col-span-5 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-stone-100/70 border border-stone-200/80 focus-within:border-brand-700 focus-within:bg-white transition-all">
+                  <div className="sm:col-span-5 flex min-h-16 items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
                     <MapPin size={16} className="text-brand-700 shrink-0" />
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
                         Location
                       </span>
                       <input
@@ -261,21 +149,23 @@ export default function HomePage() {
                         value={searchLocation}
                         onChange={(e) => setSearchLocation(e.target.value)}
                         placeholder="City, area or landmark…"
+                        aria-label="Search by city, area or landmark"
                         className="text-xs sm:text-sm font-semibold text-stone-900 placeholder:text-stone-400 bg-transparent outline-none truncate"
                       />
                     </div>
                   </div>
 
                   {/* Property Type Dropdown */}
-                  <div className="sm:col-span-3 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-stone-100/70 border border-stone-200/80 focus-within:border-brand-700 focus-within:bg-white transition-all">
+                  <div className="sm:col-span-3 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
                     <Building2 size={16} className="text-brand-700 shrink-0" />
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
                         Type
                       </span>
                       <select
                         value={searchType}
                         onChange={(e) => setSearchType(e.target.value)}
+                        aria-label="Property type"
                         className="text-xs sm:text-sm font-semibold text-stone-900 bg-transparent outline-none cursor-pointer truncate"
                       >
                         <option value="">Any Type</option>
@@ -288,15 +178,16 @@ export default function HomePage() {
                   </div>
 
                   {/* Budget Dropdown */}
-                  <div className="sm:col-span-4 flex items-center gap-2 px-3 py-2.5 rounded-xl bg-stone-100/70 border border-stone-200/80 focus-within:border-brand-700 focus-within:bg-white transition-all">
+                  <div className="sm:col-span-4 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
                     <span className="text-sm font-bold text-brand-700 shrink-0">₹</span>
                     <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                      <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
                         Max Budget
                       </span>
                       <select
                         value={searchBudget}
                         onChange={(e) => setSearchBudget(e.target.value)}
+                        aria-label="Maximum monthly budget"
                         className="text-xs sm:text-sm font-semibold text-stone-900 bg-transparent outline-none cursor-pointer truncate"
                       >
                         <option value="">Any Budget</option>
@@ -323,7 +214,7 @@ export default function HomePage() {
                             setSearchLocation(city)
                             navigate(`/explore?city=${city}`)
                           }}
-                          className="px-2 py-0.5 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] font-medium transition-colors"
+                          className="min-h-9 px-3 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition-colors"
                         >
                           {city}
                         </button>
@@ -333,7 +224,7 @@ export default function HomePage() {
 
                   <button
                     type="submit"
-                    className="w-full sm:w-auto px-6 py-2.5 bg-brand-700 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+                    className="w-full sm:w-auto min-h-12 px-6 py-3 bg-brand-700 hover:bg-brand-800 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                   >
                     <Search size={15} />
                     Search Properties
@@ -345,15 +236,15 @@ export default function HomePage() {
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-stone-600">
                 <div className="flex items-center gap-1.5">
                   <Shield size={14} className="text-emerald-600" />
-                  <span className="font-medium">100% Verified Properties</span>
+                  <span className="font-medium">Verified status on each listing</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 size={14} className="text-emerald-600" />
-                  <span className="font-medium">Zero Brokerage Options</span>
+                  <span className="font-medium">Direct owner discovery</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock size={14} className="text-emerald-600" />
-                  <span className="font-medium">Real-time Availability</span>
+                  <span className="font-medium">Contact owners about availability</span>
                 </div>
               </div>
             </div>
@@ -361,11 +252,12 @@ export default function HomePage() {
             {/* Right Column: High Quality Photography Composition */}
             <div className="lg:col-span-5 relative mt-6 lg:mt-0">
               {/* Primary Architectural Showcase */}
-              <div className="relative rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-[14/11] border border-stone-200 shadow-xl bg-stone-200">
+              <div className="relative rounded-[1.75rem] overflow-hidden aspect-[4/3] sm:aspect-[5/4] border border-white shadow-[0_30px_70px_-32px_rgba(15,29,62,0.48)] bg-stone-200">
                 <img
-                  src={HERO_MAIN_PHOTO}
-                  alt="High quality rental property showcase"
+                  src={featuredProperty?.images[0] || HERO_MAIN_PHOTO}
+                  alt={featuredProperty?.title || 'Rental home featured by NextFind'}
                   className="w-full h-full object-cover"
+                  fetchPriority="high"
                 />
 
                 {/* Floating Information Card */}
@@ -379,17 +271,17 @@ export default function HomePage() {
                         </span>
                       </div>
                       <p className="text-xs sm:text-sm font-extrabold text-stone-900 truncate">
-                        3BHK Villa with Private Garden
+                        {featuredProperty?.title || 'Homes picked for your next move'}
                       </p>
-                      <p className="text-[11px] text-stone-500 truncate">Koregaon Park, Pune</p>
+                      <p className="text-xs text-stone-500 truncate">{featuredProperty ? `${featuredProperty.location.area}, ${featuredProperty.location.city}` : 'Explore homes across India'}</p>
                     </div>
 
                     <div className="text-right shrink-0">
                       <p className="text-xs sm:text-sm font-extrabold text-brand-700">
-                        ₹68,000<span className="text-[10px] font-normal text-stone-500">/mo</span>
+                        {featuredProperty ? formatRupee(featuredProperty.price) : 'Explore'}<span className="text-[10px] font-normal text-stone-500">{featuredProperty ? '/mo' : ''}</span>
                       </p>
                       <Link
-                        to="/property/3"
+                        to={featuredProperty ? `/property/${featuredProperty.id}` : '/explore'}
                         className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-0.5 justify-end mt-0.5"
                       >
                         Details <ChevronRight size={12} />
@@ -435,47 +327,47 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           PROJECT METRICS STRIP (Grounded Academic & Demo Metrics)
           ══════════════════════════════════════════════════════ */}
-      <section className="bg-[#142854] text-white py-8 border-y border-brand-900">
+      <section className="bg-brand-900 text-white py-8 border-y border-brand-900">
         <div className="container-xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
             <div className="pt-2 md:pt-0">
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-0.5">
-                50+
+                {mockProperties.length}
               </p>
               <p className="text-xs font-semibold text-stone-300 uppercase tracking-wider">
-                Rental Cities
+                Preview listings
               </p>
-              <p className="text-[10px] text-stone-400 mt-0.5">Top Metros & Tier-1 Hubs</p>
+              <p className="text-xs text-stone-400 mt-1">Sample property catalog</p>
             </div>
 
             <div className="pt-2 md:pt-0">
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-400 mb-0.5">
-                100%
+                {cityCount}
               </p>
               <p className="text-xs font-semibold text-stone-300 uppercase tracking-wider">
-                Verified Listings
+                Cities represented
               </p>
-              <p className="text-[10px] text-stone-400 mt-0.5">Onboarded via Review</p>
+              <p className="text-xs text-stone-400 mt-1">Based on sample listings</p>
             </div>
 
             <div className="pt-2 md:pt-0">
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-0.5">
-                4.8 / 5
+                {categoryCount}
               </p>
               <p className="text-xs font-semibold text-stone-300 uppercase tracking-wider">
-                Average Rating
+                Rental categories
               </p>
-              <p className="text-[10px] text-stone-400 mt-0.5">Tenant Satisfaction Index</p>
+              <p className="text-xs text-stone-400 mt-1">Rooms, flats, homes and more</p>
             </div>
 
             <div className="pt-2 md:pt-0">
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-emerald-400 mb-0.5">
-                0₹
+                ✓
               </p>
               <p className="text-xs font-semibold text-stone-300 uppercase tracking-wider">
-                Brokerage Commission
+                Direct discovery
               </p>
-              <p className="text-[10px] text-stone-400 mt-0.5">Direct Owner Contact</p>
+              <p className="text-xs text-stone-400 mt-1">Connect through each listing</p>
             </div>
           </div>
         </div>
@@ -484,17 +376,17 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           PROPERTY CATEGORIES — Visual exploration cards
           ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-18 bg-white border-b border-stone-200">
+      <section className="py-section bg-white border-b border-stone-200">
         <div className="container-xl">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
             <div>
               <span className="section-badge mb-2.5">
                 Diverse Rental Options
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+              <h2 className="text-section font-bold text-stone-900 tracking-tight">
                 Explore by Property Category
               </h2>
-              <p className="text-xs sm:text-sm text-stone-500 mt-1">
+              <p className="text-sm sm:text-base text-stone-500 mt-2">
                 Whether you need a private room, an entire flat or an independent villa.
               </p>
             </div>
@@ -512,7 +404,7 @@ export default function HomePage() {
               <Link
                 key={cat.type}
                 to={`/explore?type=${cat.type}`}
-                className="group relative rounded-2xl overflow-hidden aspect-[4/5] border border-stone-200 shadow-sm block transition-all duration-200 hover:-translate-y-1 hover:shadow-md"
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-[4/5] border border-stone-200 shadow-sm block transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200"
               >
                 {/* Background Photography */}
                 <img
@@ -527,7 +419,7 @@ export default function HomePage() {
                 {/* Price Pill Tag on Top */}
                 <div className="absolute top-3.5 left-3.5">
                   <span className="px-2.5 py-1 rounded-md bg-white/95 text-stone-900 text-[10px] font-bold shadow-xs">
-                    {cat.tag}
+                    {categoryPriceLabel(cat.type)}
                   </span>
                 </div>
 
@@ -549,7 +441,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           FEATURED PROPERTIES — Real Listings Grid with Category Filter
           ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-18 bg-[#fafaf7] border-b border-stone-200">
+      <section className="py-section bg-stone-50 border-b border-stone-200">
         <div className="container-xl">
 
           {/* Section Header */}
@@ -558,11 +450,11 @@ export default function HomePage() {
               <span className="section-badge mb-2.5">
                 Handpicked Listings
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+              <h2 className="text-section font-bold text-stone-900 tracking-tight">
                 Featured Rental Properties
               </h2>
-              <p className="text-xs sm:text-sm text-stone-500 mt-1">
-                Verified photos, verified owners, and complete upfront pricing.
+              <p className="text-sm sm:text-base text-stone-500 mt-2">
+                Browse available homes and compare the details that matter to you.
               </p>
             </div>
 
@@ -573,8 +465,9 @@ export default function HomePage() {
                   key={tab.value}
                   type="button"
                   onClick={() => setActiveFilter(tab.value)}
+                  aria-pressed={activeFilter === tab.value}
                   className={cn(
-                    'px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-150 whitespace-nowrap cursor-pointer',
+                    'min-h-10 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 whitespace-nowrap cursor-pointer',
                     activeFilter === tab.value
                       ? 'bg-brand-700 text-white shadow-xs'
                       : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-300 hover:text-stone-900'
@@ -608,16 +501,16 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           HOW IT WORKS — 3-Step Clear Rental Process
           ══════════════════════════════════════════════════════ */}
-      <section id="how-it-works" className="py-14 sm:py-18 bg-white border-b border-stone-200">
+      <section id="how-it-works" className="py-section bg-white border-b border-stone-200">
         <div className="container-xl">
           <div className="max-w-xl mx-auto text-center mb-12">
             <span className="section-badge mb-2.5">
               Frictionless Journey
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+            <h2 className="text-section font-bold text-stone-900 tracking-tight">
               Rent Your Next Home in 3 Steps
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500 mt-2">
+            <p className="text-sm sm:text-base text-stone-500 mt-3">
               No endless phone calls with middle-agents. Connect directly with owners.
             </p>
           </div>
@@ -650,7 +543,7 @@ export default function HomePage() {
               return (
                 <div
                   key={card.step}
-                  className="bg-[#fafaf7] rounded-2xl p-6 lg:p-7 border border-stone-200/90 relative flex flex-col justify-between"
+                  className="bg-stone-50 rounded-2xl p-6 lg:p-7 border border-stone-200/90 relative flex flex-col justify-between"
                 >
                   <div>
                     {/* Header: Step Number & Icon */}
@@ -684,7 +577,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           PROPERTY OWNER CTA — Harmonized with Primary Navy
           ══════════════════════════════════════════════════════ */}
-      <section className="py-14 sm:py-18 bg-[#142854] text-white border-b border-brand-900 relative overflow-hidden">
+      <section className="py-section bg-brand-900 text-white border-b border-brand-950 relative overflow-hidden">
         {/* Subtle geometric pattern overlay */}
         <div
           className="absolute inset-0 opacity-5 pointer-events-none"
@@ -748,16 +641,16 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           WHY NEXTFIND — Four Pillars of Rental Excellence
           ══════════════════════════════════════════════════════ */}
-      <section id="why-nextfind" className="py-14 sm:py-18 bg-[#fafaf7]">
+      <section id="why-nextfind" className="py-section bg-stone-50">
         <div className="container-xl">
           <div className="max-w-xl mx-auto text-center mb-12">
             <span className="section-badge mb-2.5">
               The NextFind Difference
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
+            <h2 className="text-section font-bold text-stone-900 tracking-tight">
               Renting Built for Trust & Simplicity
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500 mt-2">
+            <p className="text-sm sm:text-base text-stone-500 mt-3">
               Every design and engineering choice is made to eliminate friction between owners and renters.
             </p>
           </div>
@@ -766,7 +659,7 @@ export default function HomePage() {
             {[
               {
                 title: 'Verified Listings',
-                desc: 'Every home listing is audited for genuine photos, active contact details and accurate rent figures.',
+                desc: 'Review the verification status and details provided with each property listing.',
                 icon: Shield,
                 accent: 'text-brand-700 bg-brand-50 border-brand-200',
               },

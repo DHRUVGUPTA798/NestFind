@@ -1,13 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { useSearchParams, Link } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import {
-  Search, MapPin, SlidersHorizontal, RotateCcw,
-  Building2, Bed, Bath, Wifi, Wind, Car, Dumbbell,
-  Shield, Check, ArrowUpDown, ChevronDown, Home, X
+  Search, SlidersHorizontal, RotateCcw, Building2,
+  Wifi, Wind, Car, Dumbbell, Shield, ArrowUpDown, X
 } from 'lucide-react'
 import { mockProperties } from '../data/mock/properties'
 import PropertyCard from '../components/property/PropertyCard'
-import { PropertyCardSkeleton } from '../components/ui/Skeleton'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
 
@@ -52,19 +50,30 @@ export default function ExplorePage() {
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [sortBy, setSortBy] = useState('relevance')
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
 
   // Sync state if URL search query changes
   useEffect(() => {
-    if (cityParam) setSearchTerm(cityParam)
-    if (typeParam) setSelectedType(typeParam)
-    if (maxPriceParam) setPriceRange(Number(maxPriceParam))
+    const parsedMaxPrice = Number(maxPriceParam)
+    setSearchTerm(cityParam)
+    setSelectedType(typeParam)
+    setPriceRange(maxPriceParam && Number.isFinite(parsedMaxPrice)
+      ? Math.min(100000, Math.max(5000, parsedMaxPrice))
+      : 100000)
   }, [cityParam, typeParam, maxPriceParam])
 
-  // Simulate quick filtering transition
-  const handleFilterChange = (setter, val) => {
-    setter(val)
-  }
+  useEffect(() => {
+    if (!mobileFilterOpen) return undefined
+    const previousOverflow = document.body.style.overflow
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileFilterOpen(false)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileFilterOpen])
 
   const toggleAmenity = (id) => {
     setSelectedAmenities(prev =>
@@ -82,6 +91,14 @@ export default function ExplorePage() {
     setVerifiedOnly(false)
     setSortBy('relevance')
     setSearchParams({})
+  }
+
+  const updateSearchParam = (key, value) => {
+    const nextParams = new URLSearchParams(searchParams)
+    if (key === 'city') nextParams.delete('location')
+    if (value) nextParams.set(key, value)
+    else nextParams.delete(key)
+    setSearchParams(nextParams, { replace: true })
   }
 
   // Filter & Sort Logic
@@ -149,7 +166,7 @@ export default function ExplorePage() {
   ])
 
   return (
-    <div className="bg-[#f8f9fb] min-h-[calc(100vh-72px)] page-enter">
+    <div className="bg-stone-50 min-h-[calc(100vh-72px)] page-enter">
 
       {/* Top Header Filter Bar */}
       <div className="bg-white border-b border-stone-200 sticky top-[72px] z-30 shadow-xs">
@@ -162,13 +179,19 @@ export default function ExplorePage() {
               <input
                 type="text"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value)
+                  updateSearchParam('city', e.target.value.trim() ? e.target.value : '')
+                }}
                 placeholder="Search by city (e.g. Bengaluru, Mumbai, Pune)..."
                 className="w-full text-xs sm:text-sm font-semibold text-stone-900 bg-transparent outline-none placeholder:text-stone-400"
               />
               {searchTerm && (
                 <button
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => {
+                    setSearchTerm('')
+                    updateSearchParam('city', '')
+                  }}
                   className="text-stone-400 hover:text-stone-700 text-xs font-bold"
                 >
                   <X size={14} />
@@ -252,7 +275,10 @@ export default function ExplorePage() {
                       type="radio"
                       name="propertyType"
                       checked={selectedType === type.value}
-                      onChange={() => setSelectedType(type.value)}
+                      onChange={() => {
+                        setSelectedType(type.value)
+                        updateSearchParam('type', type.value)
+                      }}
                       className="accent-brand-700 size-3.5 cursor-pointer"
                     />
                   </label>
@@ -276,7 +302,11 @@ export default function ExplorePage() {
                 max="100000"
                 step="2500"
                 value={priceRange}
-                onChange={(e) => setPriceRange(Number(e.target.value))}
+                onChange={(e) => {
+                  const nextPrice = Number(e.target.value)
+                  setPriceRange(nextPrice)
+                  updateSearchParam('maxPrice', nextPrice >= 100000 ? '' : String(nextPrice))
+                }}
                 className="w-full accent-brand-700 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-stone-400 font-bold mt-1">
@@ -372,13 +402,7 @@ export default function ExplorePage() {
 
           {/* Right Properties Grid Column */}
           <main className="col-span-1 lg:col-span-9">
-            {isLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <PropertyCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : filteredProperties.length > 0 ? (
+            {filteredProperties.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredProperties.map(property => (
                   <PropertyCard key={property.id} property={property} />
@@ -417,15 +441,16 @@ export default function ExplorePage() {
             className="absolute inset-0 bg-stone-900/40 backdrop-blur-xs"
             onClick={() => setMobileFilterOpen(false)}
           />
-          <div className="relative bg-white w-full max-h-[85vh] rounded-t-3xl overflow-y-auto p-6 shadow-2xl flex flex-col justify-between">
+          <div role="dialog" aria-modal="true" aria-labelledby="mobile-filter-title" className="relative bg-white w-full max-h-[85vh] rounded-t-3xl overflow-y-auto p-6 shadow-2xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-stone-100 mb-5">
-                <h3 className="text-base font-extrabold text-stone-900">
+                <h3 id="mobile-filter-title" className="text-lg font-bold text-stone-900">
                   Refine Search Filters
                 </h3>
                 <button
                   onClick={() => setMobileFilterOpen(false)}
                   className="size-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500"
+                  aria-label="Close filters"
                 >
                   <X size={16} />
                 </button>
@@ -437,7 +462,10 @@ export default function ExplorePage() {
                   <label className="text-xs font-bold text-stone-700 block mb-2">Property Type</label>
                   <select
                     value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
+                    onChange={(e) => {
+                      setSelectedType(e.target.value)
+                      updateSearchParam('type', e.target.value)
+                    }}
                     className="w-full p-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs font-semibold"
                   >
                     {PROPERTY_TYPES.map(t => (
@@ -457,7 +485,11 @@ export default function ExplorePage() {
                     max="100000"
                     step="2500"
                     value={priceRange}
-                    onChange={(e) => setPriceRange(Number(e.target.value))}
+                    onChange={(e) => {
+                      const nextPrice = Number(e.target.value)
+                      setPriceRange(nextPrice)
+                      updateSearchParam('maxPrice', nextPrice >= 100000 ? '' : String(nextPrice))
+                    }}
                     className="w-full accent-brand-700"
                   />
                 </div>
@@ -482,6 +514,47 @@ export default function ExplorePage() {
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label className="text-xs font-bold text-stone-700 block mb-2">Furnishing</label>
+                  <select
+                    value={furnishing}
+                    onChange={(e) => setFurnishing(e.target.value)}
+                    className="w-full min-h-11 px-3 rounded-xl bg-stone-50 border border-stone-200 text-sm font-semibold"
+                  >
+                    {FURNISHING_TYPES.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <fieldset>
+                  <legend className="text-xs font-bold text-stone-700 mb-3">Essential amenities</legend>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-3">
+                    {AMENITY_OPTIONS.map(({ id, label, icon: Icon }) => (
+                      <label key={id} className="flex min-h-10 items-center gap-2 text-sm text-stone-700">
+                        <input
+                          type="checkbox"
+                          checked={selectedAmenities.includes(id)}
+                          onChange={() => toggleAmenity(id)}
+                          className="size-4 rounded accent-brand-700"
+                        />
+                        <Icon size={15} className="shrink-0 text-stone-500" />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+
+                <label className="flex min-h-11 items-center justify-between gap-3 border-t border-stone-100 pt-4 text-sm font-semibold text-stone-700">
+                  <span className="flex items-center gap-2"><Shield size={16} className="text-emerald-600" /> Verified listings only</span>
+                  <input
+                    type="checkbox"
+                    checked={verifiedOnly}
+                    onChange={(e) => setVerifiedOnly(e.target.checked)}
+                    className="size-4 rounded accent-emerald-600"
+                  />
+                </label>
               </div>
             </div>
 

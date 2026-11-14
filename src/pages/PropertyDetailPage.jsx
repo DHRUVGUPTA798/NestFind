@@ -81,7 +81,7 @@ export default function PropertyDetailPage() {
   }
 
   return (
-    <div className="bg-[#f8f9fb] min-h-screen py-6 sm:py-10 page-enter">
+    <div className="bg-stone-50 min-h-screen py-6 sm:py-10 page-enter">
       <div className="container-xl">
 
         {/* Back Link & Quick Actions */}

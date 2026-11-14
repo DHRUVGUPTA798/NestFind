@@ -68,7 +68,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="bg-[#f8f9fb] min-h-[calc(100vh-72px)] py-6 sm:py-8 page-enter">
+    <div className="bg-stone-50 min-h-[calc(100vh-72px)] py-6 sm:py-8 page-enter">
       <div className="container-xl">
 
         <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden h-[680px] grid grid-cols-1 md:grid-cols-12">

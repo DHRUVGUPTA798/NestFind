@@ -35,10 +35,10 @@ const popularCities = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[#142854] text-stone-300 border-t border-brand-900/60 selection:bg-emerald-600 selection:text-white">
+    <footer className="bg-brand-900 text-stone-300 border-t border-brand-900/60 selection:bg-emerald-600 selection:text-white">
 
       {/* Top Banner: Quick City Exploration */}
-      <div className="border-b border-white/10 bg-[#0f1d3e]/50">
+      <div className="border-b border-white/10 bg-brand-950/50">
         <div className="container-xl py-3.5">
           <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-4 text-xs">
             <div className="flex flex-wrap items-center gap-2">
@@ -64,7 +64,7 @@ export default function Footer() {
 
             <div className="flex items-center gap-2 text-stone-400 text-[11px]">
               <ShieldCheck size={13} className="text-emerald-400" />
-              <span>100% Direct Owner & Verified Listings</span>
+              <span>Direct owner contact details on eligible listings</span>
             </div>
           </div>
         </div>
