@@ -1,16 +1,37 @@
-# React + Vite
+# NextFind
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+NextFind is a rental marketplace frontend built with React, Vite, and Tailwind CSS v4. The repository is organized as a monorepo so backend development can be added independently without changing the frontend's application structure.
 
-Currently, two official plugins are available:
+## Repository layout
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```text
+NextFind/
+├── frontend/   Existing React + Vite application
+├── backend/    Backend project notes; implementation is pending
+├── .gitignore
+└── README.md
+```
 
-## React Compiler
+## Run the frontend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From the repository root:
 
-## Expanding the Oxlint configuration
+```powershell
+cd frontend
+npm install
+Copy-Item .env.example .env.local
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+The environment file is optional for demo mode. Edit `frontend/.env.local` to configure the API URL or switch `VITE_USE_MOCK` to `false` when a compatible backend is available.
+
+## Frontend checks
+
+Run these commands from `frontend/`:
+
+```powershell
+npm run build
+npm run lint
+```
+
+See [backend/README.md](./backend/README.md) for the planned backend stack and integration notes.
