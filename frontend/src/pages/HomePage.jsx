@@ -5,7 +5,10 @@ import {
   Heart, ArrowRight, Building2, Check, Clock, UserCheck
 } from 'lucide-react'
 import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
-import PropertyCard, { formatRupee } from '../components/property/PropertyCard'
+import PropertyCard from '../components/property/PropertyCard'
+import { formatRupee } from '../utils/format'
+import SearchSelect from '../components/search/SearchSelect'
+import LocationSuggest from '../components/search/LocationSuggest'
 import { cn } from '../utils/cn'
 
 /* ─────────────────────────────────────────────
@@ -83,6 +86,7 @@ export default function HomePage() {
 
   // Featured grid filter
   const [activeFilter, setActiveFilter] = useState('all')
+  const availableCities = [...new Set(properties.map((property) => property.location.city))].sort()
 
   const handleSearchSubmit = (e) => {
     e?.preventDefault()
@@ -105,7 +109,7 @@ export default function HomePage() {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION — 2-Column Balanced Architecture
           ══════════════════════════════════════════════════════ */}
-      <section className="relative bg-stone-50 pt-10 pb-14 sm:pt-14 lg:pt-16 lg:pb-20 border-b border-stone-200/70 overflow-hidden">
+      <section className="relative overflow-visible bg-stone-50 pt-10 pb-14 sm:pt-14 lg:pt-16 lg:pb-20 border-b border-stone-200/70">
         <div className="container-xl">
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-center">
 
@@ -139,65 +143,37 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
 
                   {/* Location Input */}
-                  <div className="sm:col-span-5 flex min-h-16 items-center gap-3 px-4 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
-                    <MapPin size={16} className="text-brand-700 shrink-0" />
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
-                        Location
-                      </span>
-                      <input
-                        type="text"
-                        value={searchLocation}
-                        onChange={(e) => setSearchLocation(e.target.value)}
-                        placeholder="City, area or landmark…"
-                        aria-label="Search by city, area or landmark"
-                        className="text-xs sm:text-sm font-semibold text-stone-900 placeholder:text-stone-400 bg-transparent outline-none truncate"
-                      />
-                    </div>
+                  <div className="relative z-20 flex min-h-[68px] items-center rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 transition-colors focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100 sm:col-span-5">
+                    <LocationSuggest value={searchLocation} onChange={setSearchLocation} cities={availableCities} />
                   </div>
 
                   {/* Property Type Dropdown */}
-                  <div className="sm:col-span-3 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
+                  <div className="relative z-10 sm:col-span-3 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                     <Building2 size={16} className="text-brand-700 shrink-0" />
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
                         Type
                       </span>
-                      <select
-                        value={searchType}
-                        onChange={(e) => setSearchType(e.target.value)}
-                        aria-label="Property type"
-                        className="text-xs sm:text-sm font-semibold text-stone-900 bg-transparent outline-none cursor-pointer truncate"
-                      >
-                        <option value="">Any Type</option>
-                        <option value="room">Room</option>
-                        <option value="flat">Apartment</option>
-                        <option value="house">House / Villa</option>
-                        <option value="pg">PG / Hostel</option>
-                      </select>
+                      <SearchSelect label="Property type" value={searchType} onChange={setSearchType} options={[
+                        { value: '', label: 'Any Type' }, { value: 'room', label: 'Room' },
+                        { value: 'flat', label: 'Apartment' }, { value: 'house', label: 'Independent House' },
+                        { value: 'pg', label: 'PG / Hostel' },
+                      ]} />
                     </div>
                   </div>
 
                   {/* Budget Dropdown */}
-                  <div className="sm:col-span-4 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white transition-all">
+                  <div className="relative z-10 sm:col-span-4 flex min-h-16 items-center gap-3 px-3 py-3 rounded-xl bg-stone-50 border border-stone-200 focus-within:border-brand-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                     <span className="text-sm font-bold text-brand-700 shrink-0">₹</span>
                     <div className="flex flex-col min-w-0 flex-1">
                       <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
                         Max Budget
                       </span>
-                      <select
-                        value={searchBudget}
-                        onChange={(e) => setSearchBudget(e.target.value)}
-                        aria-label="Maximum monthly budget"
-                        className="text-xs sm:text-sm font-semibold text-stone-900 bg-transparent outline-none cursor-pointer truncate"
-                      >
-                        <option value="">Any Budget</option>
-                        <option value="10000">Up to ₹10,000</option>
-                        <option value="20000">Up to ₹20,000</option>
-                        <option value="35000">Up to ₹35,000</option>
-                        <option value="50000">Up to ₹50,000</option>
-                        <option value="75000">Up to ₹75,000</option>
-                      </select>
+                      <SearchSelect label="Max monthly budget" value={searchBudget} onChange={setSearchBudget} options={[
+                        { value: '', label: 'Any Budget' }, { value: '10000', label: 'Up to ₹10,000' },
+                        { value: '20000', label: 'Up to ₹20,000' }, { value: '35000', label: 'Up to ₹35,000' },
+                        { value: '50000', label: 'Up to ₹50,000' }, { value: '75000', label: 'Up to ₹75,000' },
+                      ]} />
                     </div>
                   </div>
                 </div>

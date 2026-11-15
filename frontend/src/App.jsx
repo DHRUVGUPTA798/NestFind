@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { WishlistProvider } from './context/WishlistContext'
 import RootLayout from './components/layout/RootLayout'
+import RequireAuth from './components/layout/RequireAuth'
 
 // Production Pages
 import HomePage from './pages/HomePage'
@@ -35,15 +36,15 @@ export default function App() {
 
               {/* Tenant Tools & Shortlisting */}
               <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/dashboard" element={<RequireAuth role="tenant"><DashboardPage /></RequireAuth>} />
 
               {/* Landlord & Property Owner Portal */}
-              <Route path="/owner/dashboard" element={<OwnerDashboardPage />} />
-              <Route path="/owner/add-property" element={<AddPropertyPage />} />
+              <Route path="/owner/dashboard" element={<RequireAuth role="owner"><OwnerDashboardPage /></RequireAuth>} />
+              <Route path="/owner/add-property" element={<RequireAuth role="owner"><AddPropertyPage /></RequireAuth>} />
 
               {/* Direct Messaging */}
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/chat/:id" element={<ChatPage />} />
+              <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+              <Route path="/chat/:id" element={<RequireAuth><ChatPage /></RequireAuth>} />
 
               {/* 404 Catch-All */}
               <Route path="*" element={<NotFoundPage />} />

@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { User, Mail, Lock, Phone, Eye, EyeOff, Home, Building2, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { User, Mail, Lock, Phone, Eye, EyeOff, Home, Building2, AlertCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
 
 export default function SignupPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { signup, isLoading } = useAuth()
 
   const [role, setRole] = useState('tenant') // 'tenant' | 'owner'
@@ -21,8 +22,12 @@ export default function SignupPage() {
     e.preventDefault()
     setErrorMessage('')
 
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.')
+    if (!name.trim()) {
+      setErrorMessage('Enter your full name.')
+      return
+    }
+    if (password.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.')
       return
     }
 
@@ -33,9 +38,13 @@ export default function SignupPage() {
         phone,
         password,
         role,
-        avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80&fit=crop`,
+        avatar: '',
       })
-      navigate(role === 'owner' ? '/owner/dashboard' : '/dashboard')
+      const requestedPath = location.state?.from?.pathname
+      const roleCompatiblePath = role === 'owner'
+        ? requestedPath?.startsWith('/owner/')
+        : requestedPath && !requestedPath.startsWith('/owner/')
+      navigate(roleCompatiblePath ? requestedPath : (role === 'owner' ? '/owner/dashboard' : '/dashboard'), { replace: true })
     } catch (err) {
       setErrorMessage(err.message || 'Signup failed. Please try again.')
     }
@@ -63,6 +72,7 @@ export default function SignupPage() {
           <button
             type="button"
             onClick={() => setRole('tenant')}
+            aria-pressed={role === 'tenant'}
             className={cn(
               'py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5',
               role === 'tenant'
@@ -75,6 +85,7 @@ export default function SignupPage() {
           <button
             type="button"
             onClick={() => setRole('owner')}
+            aria-pressed={role === 'owner'}
             className={cn(
               'py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5',
               role === 'owner'
@@ -96,14 +107,16 @@ export default function SignupPage() {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {/* Full Name */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
+            <label htmlFor="signup-name" className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
               Full Name
             </label>
             <div className="relative flex items-center">
               <User size={15} className="absolute left-3 text-stone-400" />
               <input
+                id="signup-name"
                 type="text"
                 required
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Aarav Sharma"
@@ -114,14 +127,16 @@ export default function SignupPage() {
 
           {/* Email */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
+            <label htmlFor="signup-email" className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
               Email Address
             </label>
             <div className="relative flex items-center">
               <Mail size={15} className="absolute left-3 text-stone-400" />
               <input
+                id="signup-email"
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -132,14 +147,16 @@ export default function SignupPage() {
 
           {/* Phone Number */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
+            <label htmlFor="signup-phone" className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
               Phone Number
             </label>
             <div className="relative flex items-center">
               <Phone size={15} className="absolute left-3 text-stone-400" />
               <input
+                id="signup-phone"
                 type="tel"
                 required
+                autoComplete="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+91 98765 43210"
@@ -150,22 +167,27 @@ export default function SignupPage() {
 
           {/* Password */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
+            <label htmlFor="signup-password" className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-1">
               Create Password
             </label>
             <div className="relative flex items-center">
               <Lock size={15} className="absolute left-3 text-stone-400" />
               <input
+                id="signup-password"
                 type={showPassword ? 'text' : 'password'}
                 required
+                minLength={8}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-stone-50 border border-stone-200 text-stone-900 outline-none focus:bg-white focus:border-brand-700 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
                 className="absolute right-3 text-stone-400 hover:text-stone-700"
               >
                 {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -184,10 +206,14 @@ export default function SignupPage() {
           </Button>
         </form>
 
+        <p className="mt-4 text-center text-[11px] leading-relaxed text-stone-500">
+          Demo authentication is local to this browser and is not production security.
+        </p>
+
         <div className="mt-6 pt-5 border-t border-stone-100 text-center">
           <p className="text-xs text-stone-500">
             Already registered?{' '}
-            <Link to="/login" className="font-bold text-brand-700 hover:underline">
+            <Link to="/login" state={location.state} className="font-bold text-brand-700 hover:underline">
               Sign In here
             </Link>
           </p>

@@ -116,13 +116,14 @@ export default function Navbar() {
             {/* ── Right: Owner CTA + Auth Actions ──── */}
             <div className="hidden lg:flex items-center gap-3">
               {/* Secondary CTA: List Your Property */}
-              <Link
-                to="/owner/add-property"
+              {(!user || user.role === 'owner') && <Link
+                to={user ? '/owner/add-property' : '/signup'}
+                state={!user ? { from: { pathname: '/owner/add-property' } } : undefined}
                 className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-stone-700 hover:text-brand-700 hover:bg-stone-100/70 rounded-lg transition-colors duration-150"
               >
                 <PlusCircle size={14} className="text-emerald-600" />
                 List Your Property
-              </Link>
+              </Link>}
 
               <div className="h-4 w-px bg-stone-200 mx-0.5" />
 
@@ -137,11 +138,11 @@ export default function Navbar() {
                         : 'border-stone-200 hover:border-stone-300 text-stone-800 bg-white'
                     )}
                   >
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="size-7 rounded-full object-cover border border-stone-200"
-                    />
+                    {user.avatar ? <img src={user.avatar} alt="" className="size-7 rounded-full object-cover border border-stone-200" /> : (
+                      <span aria-hidden="true" className="grid size-7 place-items-center rounded-full border border-brand-200 bg-brand-50 text-[10px] font-bold text-brand-700">
+                        {user.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
                     <span className="max-w-[100px] truncate">{user.name.split(' ')[0]}</span>
                     <ChevronDown size={14} className={cn('text-stone-400 transition-transform duration-200', userMenuOpen && 'rotate-180')} />
                   </button>
@@ -156,20 +157,12 @@ export default function Navbar() {
 
                       <div className="py-1">
                         <Link
-                          to="/dashboard"
+                          to={user.role === 'owner' ? '/owner/dashboard' : '/dashboard'}
                           onClick={() => setUserMenuOpen(false)}
                           className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 hover:text-brand-700 transition-colors"
                         >
                           <LayoutDashboard size={14} className="text-stone-400" />
-                          User Dashboard
-                        </Link>
-                        <Link
-                          to="/owner/dashboard"
-                          onClick={() => setUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 hover:text-brand-700 transition-colors"
-                        >
-                          <Home size={14} className="text-stone-400" />
-                          Owner Dashboard
+                          {user.role === 'owner' ? 'Owner Dashboard' : 'Tenant Dashboard'}
                         </Link>
                         <Link
                           to="/wishlist"
@@ -263,26 +256,34 @@ export default function Navbar() {
                 </NavLink>
               ))}
 
-              <Link
-                to="/owner/add-property"
+              {(!user || user.role === 'owner') && <Link
+                to={user ? '/owner/add-property' : '/signup'}
+                state={!user ? { from: { pathname: '/owner/add-property' } } : undefined}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-2 px-4 py-3 rounded-xl text-base font-bold text-emerald-700 hover:bg-emerald-50 mt-2"
               >
                 <PlusCircle size={18} />
                 List Your Property
-              </Link>
+              </Link>}
             </div>
 
             <div className="pt-6 border-t border-stone-200 space-y-3">
               {user ? (
                 <>
                   <div className="flex items-center gap-3 px-3 py-2 bg-white rounded-xl border border-stone-200">
-                    <img src={user.avatar} alt={user.name} className="size-10 rounded-full object-cover" />
+                    {user.avatar ? <img src={user.avatar} alt="" className="size-10 rounded-full object-cover" /> : (
+                      <span aria-hidden="true" className="grid size-10 place-items-center rounded-full bg-brand-50 font-bold text-brand-700">
+                        {user.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
                     <div className="min-w-0">
                       <p className="text-sm font-bold text-stone-900 truncate">{user.name}</p>
                       <p className="text-xs text-stone-500 truncate">{user.email}</p>
                     </div>
                   </div>
+                  <Link to={user.role === 'owner' ? '/owner/dashboard' : '/dashboard'} onClick={() => setMenuOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold text-stone-800 hover:bg-white">
+                    <LayoutDashboard size={16} className="mr-2 inline-block text-brand-700" />{user.role === 'owner' ? 'Owner Dashboard' : 'Tenant Dashboard'}
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full py-3 text-sm font-bold text-red-600 border border-red-200 bg-red-50/50 rounded-xl"

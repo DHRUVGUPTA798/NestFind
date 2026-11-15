@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { Mail, Phone, Calendar, Heart, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
-import { mockUser } from '../data/mock/properties'
+import PropertyImage from '../components/property/PropertyImage'
+import { getPropertyImages } from '../utils/propertyImages'
 import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
-import { formatRupee } from '../components/property/PropertyCard'
+import { formatRupee } from '../utils/format'
 import Button from '../components/ui/Button'
 
 export default function DashboardPage() {
@@ -14,27 +15,12 @@ export default function DashboardPage() {
   const properties = usePropertyCatalog()
 
   // Use authenticated user or fallback to standard demo user profile
-  const currentUser = user || mockUser
+  const currentUser = user
 
   const savedListings = properties.filter(p => wishlist.includes(p.id))
 
-  // Scheduled Visits for Tenant
-  const scheduledVisits = [
-    {
-      id: 'sv-1',
-      property: properties.find((property) => property.id === '1'),
-      date: '2026-11-16',
-      time: '11:30 AM',
-      status: 'Confirmed by Landlord',
-    },
-    {
-      id: 'sv-2',
-      property: properties.find((property) => property.id === '2'),
-      date: '2026-11-19',
-      time: '4:00 PM',
-      status: 'Awaiting Confirmation',
-    },
-  ]
+  // Visit requests are not persisted by the demo service; do not show shared sample bookings.
+  const scheduledVisits = []
 
   return (
     <div className="bg-stone-50 min-h-[calc(100vh-72px)] py-8 sm:py-12 page-enter">
@@ -43,18 +29,20 @@ export default function DashboardPage() {
         {/* User Profile Header Card */}
         <div className="bg-white rounded-2xl border border-stone-200 p-6 sm:p-8 shadow-xs mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
-            <img
-              src={currentUser.avatar}
-              alt={currentUser.name}
-              className="size-16 sm:size-20 rounded-2xl object-cover border-2 border-brand-200"
-            />
+            {currentUser.avatar ? (
+              <img src={currentUser.avatar} alt="" className="size-16 sm:size-20 rounded-2xl object-cover border-2 border-brand-200" />
+            ) : (
+              <div aria-hidden="true" className="size-16 sm:size-20 rounded-2xl border-2 border-brand-200 bg-brand-50 text-brand-700 grid place-items-center text-xl font-bold">
+                {currentUser.name.split(/\s+/).map((part) => part[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <h1 className="text-xl sm:text-2xl font-extrabold text-stone-900 tracking-tight">
                   {currentUser.name}
                 </h1>
                 <span className="px-2.5 py-0.5 rounded-md bg-brand-50 text-brand-700 text-xs font-bold uppercase tracking-wider">
-                  Verified {currentUser.role || 'Tenant'}
+                  {currentUser.role === 'owner' ? 'Owner account' : 'Tenant account'}
                 </span>
               </div>
 
@@ -66,7 +54,7 @@ export default function DashboardPage() {
                   <Phone size={13} className="text-stone-400" /> {currentUser.phone}
                 </span>
                 <span className="flex items-center gap-1">
-                  <Calendar size={13} className="text-stone-400" /> Member since Jan 2026
+                  <Calendar size={13} className="text-stone-400" /> Member since {currentUser.joinedAt || 'recently'}
                 </span>
               </div>
             </div>
@@ -99,14 +87,21 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-4">
+              {scheduledVisits.length === 0 && (
+                <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 px-5 py-8 text-center">
+                  <p className="text-sm font-bold text-stone-800">No visits scheduled yet</p>
+                  <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-stone-500">When you request a property visit, its details will appear here.</p>
+                  <Link to="/explore" className="mt-4 inline-flex text-xs font-bold text-brand-700 hover:underline">Explore rentals</Link>
+                </div>
+              )}
               {scheduledVisits.map(visit => (
                 <div
                   key={visit.id}
                   className="p-4 rounded-xl bg-stone-50 border border-stone-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <img
-                      src={visit.property.images[0]}
+                      <PropertyImage
+                        src={getPropertyImages(visit.property)[0]}
                       alt={visit.property.title}
                       className="size-16 rounded-xl object-cover shrink-0 border border-stone-200"
                     />
@@ -161,8 +156,8 @@ export default function DashboardPage() {
                     className="p-3 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200/80 flex items-center justify-between gap-3 transition-colors block"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={property.images[0]}
+                      <PropertyImage
+                        src={getPropertyImages(property)[0]}
                         alt={property.title}
                         className="size-12 rounded-lg object-cover shrink-0"
                       />

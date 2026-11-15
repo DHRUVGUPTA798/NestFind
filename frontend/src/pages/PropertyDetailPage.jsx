@@ -9,7 +9,10 @@ import {
 import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import { useWishlist } from '../context/WishlistContext'
 import { PropertyDetailSkeleton } from '../components/ui/Skeleton'
-import PropertyCard, { formatRupee } from '../components/property/PropertyCard'
+import PropertyCard from '../components/property/PropertyCard'
+import { formatRupee } from '../utils/format'
+import PropertyImage from '../components/property/PropertyImage'
+import { getPropertyImages } from '../utils/propertyImages'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
 
@@ -58,6 +61,7 @@ export default function PropertyDetailPage() {
   }
 
   const wishlisted = isWishlisted(property.id)
+  const galleryImages = getPropertyImages(property)
 
   // Similar properties from same or other cities
   const similarProperties = properties
@@ -156,8 +160,8 @@ export default function PropertyDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 mb-8">
           {/* Large Main Feature Photo */}
           <div className="lg:col-span-8 rounded-2xl overflow-hidden aspect-[16/10] bg-stone-200 border border-stone-200 shadow-xs">
-            <img
-              src={property.images[activeImageIndex] || property.images[0]}
+            <PropertyImage
+              src={galleryImages[activeImageIndex] || galleryImages[0]}
               alt={property.title}
               className="w-full h-full object-cover transition-all duration-300"
             />
@@ -165,11 +169,13 @@ export default function PropertyDetailPage() {
 
           {/* Side Thumbnail Strip */}
           <div className="lg:col-span-4 flex lg:flex-col gap-3 overflow-x-auto lg:overflow-visible">
-            {property.images.map((img, idx) => (
+            {galleryImages.map((img, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => setActiveImageIndex(idx)}
+                aria-label={`Show property photo ${idx + 1}`}
+                aria-pressed={activeImageIndex === idx}
                 className={cn(
                   'rounded-xl overflow-hidden aspect-[16/10] lg:h-full border-2 transition-all shrink-0 w-28 sm:w-36 lg:w-full',
                   activeImageIndex === idx
@@ -177,7 +183,7 @@ export default function PropertyDetailPage() {
                     : 'border-transparent opacity-75 hover:opacity-100'
                 )}
               >
-                <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
+                <PropertyImage src={img} alt={`Property photo ${idx + 1}`} className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -340,7 +346,7 @@ export default function PropertyDetailPage() {
 
                 {visitBooked ? (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-center text-xs font-bold text-emerald-800">
-                    ✓ Visit request sent to {property.owner.name}! Check your messages.
+                    Demo only: this request is not sent to the owner yet.
                   </div>
                 ) : (
                   <Button

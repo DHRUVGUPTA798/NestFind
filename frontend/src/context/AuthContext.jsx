@@ -1,18 +1,28 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { authService } from '../services/authService'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState(() => authService.getStoredProfile())
+  const [isLoading, setIsLoading] = useState(!authService.isDemoMode)
   const [error, setError] = useState(null)
 
-  const login = useCallback(async (email, password) => {
+  useEffect(() => {
+    if (authService.isDemoMode) return undefined
+    let active = true
+    authService.getProfile()
+      .then((response) => { if (active) setUser(response.data) })
+      .catch(() => { if (active) setUser(null) })
+      .finally(() => { if (active) setIsLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const login = useCallback(async (email, password, role) => {
     setIsLoading(true)
     setError(null)
     try {
-      const res = await authService.login(email, password)
+      const res = await authService.login(email, password, role)
       setUser(res.data)
       return res
     } catch (err) {
@@ -28,6 +38,7 @@ export function AuthProvider({ children }) {
     setError(null)
     try {
       const res = await authService.signup(userData)
+      setUser(res.data)
       return res
     } catch (err) {
       setError(err.message || 'Signup failed')
@@ -38,8 +49,11 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await authService.logout()
-    setUser(null)
+    try {
+      await authService.logout()
+    } finally {
+      setUser(null)
+    }
   }, [])
 
   const value = {

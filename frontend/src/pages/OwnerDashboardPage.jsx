@@ -7,41 +7,19 @@ import {
 import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import { propertyService } from '../services/propertyService'
 import { useAuth } from '../context/AuthContext'
-import { formatRupee } from '../components/property/PropertyCard'
+import { formatRupee } from '../utils/format'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
+import PropertyImage from '../components/property/PropertyImage'
+import { getPropertyImages } from '../utils/propertyImages'
 
 export default function OwnerDashboardPage() {
   const { user } = useAuth()
   const properties = usePropertyCatalog()
-  const ownerListings = properties.filter((property) =>
-    property.owner?.id === (user?.id || 'demo-owner') ||
-    (!user && (property.id === '1' || property.id === '3'))
-  )
+  const ownerListings = properties.filter((property) => property.owner?.id === user?.id)
 
-  // Mock Tenant Inquiries / Visit Requests
-  const [inquiries, setInquiries] = useState([
-    {
-      id: 'inq-1',
-      tenantName: 'Rahul Verma',
-      tenantAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80&fit=crop',
-      propertyTitle: 'Spacious 2BHK in Indiranagar',
-      date: '2026-11-16',
-      status: 'pending',
-      phone: '+91 98111 22334',
-      message: 'Hi, I am looking for immediate move-in for my family. Is parking included?',
-    },
-    {
-      id: 'inq-2',
-      tenantName: 'Sneha Patel',
-      tenantAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80&fit=crop',
-      propertyTitle: 'Modern 3BHK Villa with Garden',
-      date: '2026-11-18',
-      status: 'confirmed',
-      phone: '+91 98222 33445',
-      message: 'Software engineer at Hinjawadi. Can I visit this Saturday around 11 AM?',
-    },
-  ])
+  // Visit requests are not persisted by the demo service; keep each owner's inbox truthful.
+  const [inquiries, setInquiries] = useState([])
 
   const togglePropertyStatus = async (id) => {
     const property = ownerListings.find((item) => item.id === id)
@@ -152,8 +130,8 @@ export default function OwnerDashboardPage() {
                 {ownerListings.map(property => (
                   <div key={property.id} className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-stone-50/50 transition-colors">
                     <div className="flex items-center gap-3.5 min-w-0">
-                      <img
-                        src={property.images[0]}
+                      <PropertyImage
+                        src={getPropertyImages(property)[0]}
                         alt={property.title}
                         className="size-16 sm:size-20 rounded-xl object-cover shrink-0 border border-stone-200"
                       />
@@ -228,6 +206,12 @@ export default function OwnerDashboardPage() {
             </div>
 
             <div className="space-y-4">
+              {inquiries.length === 0 && (
+                <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 px-4 py-8 text-center">
+                  <p className="text-sm font-bold text-stone-800">No tour inquiries yet</p>
+                  <p className="mt-1 text-xs leading-relaxed text-stone-500">Tenant visit requests will appear here when inquiry storage is connected.</p>
+                </div>
+              )}
               {inquiries.map(inq => (
                 <div key={inq.id} className="p-3.5 rounded-xl bg-stone-50 border border-stone-200/80 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">

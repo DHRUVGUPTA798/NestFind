@@ -12,6 +12,10 @@ export function formatPrice(amount, options = {}) {
   return showPerMonth ? `${formatted}/mo` : formatted
 }
 
+export function formatRupee(amount) {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount)
+}
+
 /**
  * Truncate a string to a given length with ellipsis.
  */

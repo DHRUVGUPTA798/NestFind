@@ -35,7 +35,7 @@ function createId() {
 
 function filterProperties(source, filters = {}) {
   let results = [...source]
-  if (filters.city) results = results.filter((p) => p.location.city.toLowerCase().includes(filters.city.toLowerCase()))
+  if (filters.city) results = results.filter((p) => p.location?.city?.toLowerCase().includes(filters.city.toLowerCase()))
   if (filters.type) results = results.filter((p) => p.type === filters.type)
   if (filters.minPrice) results = results.filter((p) => p.price >= Number(filters.minPrice))
   if (filters.maxPrice) results = results.filter((p) => p.price <= Number(filters.maxPrice))
@@ -89,7 +89,7 @@ export const propertyService = {
       area: Number(data.area),
       location: { ...data.location },
       images: [...data.images],
-      amenities: [...data.amenities],
+      amenities: Array.isArray(data.amenities) ? [...data.amenities] : [],
       rating: null,
       reviewCount: 0,
       isVerified: false,

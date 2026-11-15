@@ -37,7 +37,7 @@ export default function ExplorePage() {
   const properties = usePropertyCatalog()
 
   // Read URL query params as initial filters
-  const cityParam = searchParams.get('city') || searchParams.get('location') || ''
+  const cityParam = searchParams.has('city') ? searchParams.get('city') || '' : searchParams.get('location') || ''
   const typeParam = searchParams.get('type') || ''
   const maxPriceParam = searchParams.get('maxPrice') || ''
 

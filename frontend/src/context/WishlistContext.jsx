@@ -1,18 +1,25 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react'
 import { demoPersistence } from '../services/demoPersistence'
+import { useAuth } from './AuthContext'
 
 const WishlistContext = createContext(null)
 
 export function WishlistProvider({ children }) {
-  const [wishlist, setWishlist] = useState(() => demoPersistence.readWishlist())
+  const { user } = useAuth()
+  const accountId = user?.id || null
+  const accountKey = accountId || 'guest'
+  const [wishlistByAccount, setWishlistByAccount] = useState(() => ({ [accountKey]: demoPersistence.readWishlist(accountId) }))
+  const wishlist = wishlistByAccount[accountKey] ?? demoPersistence.readWishlist(accountId)
 
   useEffect(() => {
     const syncWishlist = (event) => {
-      if (event.key === 'nextfind.demo.wishlist.v1') setWishlist(demoPersistence.readWishlist())
+      if (event.key?.startsWith('nextfind.demo.wishlist.v1')) {
+        setWishlistByAccount((saved) => ({ ...saved, [accountKey]: demoPersistence.readWishlist(accountId) }))
+      }
     }
     window.addEventListener('storage', syncWishlist)
     return () => window.removeEventListener('storage', syncWishlist)
-  }, [])
+  }, [accountId, accountKey])
 
   const toggle = useCallback((propertyId) => {
     const id = String(propertyId)
@@ -20,13 +27,13 @@ export function WishlistProvider({ children }) {
       ? wishlist.filter((savedId) => savedId !== id)
       : [...wishlist, id]
     try {
-      demoPersistence.writeWishlist(next)
-      setWishlist(next)
+      demoPersistence.writeWishlist(next, accountId)
+      setWishlistByAccount((saved) => ({ ...saved, [accountKey]: next }))
       return true
     } catch {
       return false
     }
-  }, [wishlist])
+  }, [wishlist, accountId, accountKey])
 
   const isWishlisted = useCallback(
     (propertyId) => wishlist.includes(propertyId),

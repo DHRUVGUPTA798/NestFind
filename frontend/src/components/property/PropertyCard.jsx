@@ -3,26 +3,22 @@ import { Link } from 'react-router-dom'
 import { Star, MapPin, Bed, Bath, Square, Heart, CheckCircle2 } from 'lucide-react'
 import { useWishlist } from '../../context/WishlistContext'
 import { cn } from '../../utils/cn'
-
-export function formatRupee(amount) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(amount)
-}
+import PropertyImage from './PropertyImage'
+import { getPropertyImages } from '../../utils/propertyImages'
+import { formatRupee } from '../../utils/format'
 
 export default function PropertyCard({ property }) {
   const { toggle, isWishlisted } = useWishlist()
   const wishlisted = isWishlisted(property.id)
+  const coverImage = getPropertyImages(property)[0]
 
   return (
     <article className="property-card group">
       {/* Visual Media Header */}
       <div className="relative aspect-[4/3] overflow-hidden bg-stone-100">
         <Link to={`/property/${property.id}`} className="block h-full w-full" aria-label={`View ${property.title}`}>
-          <img
-            src={property.images[0]}
+          <PropertyImage
+            src={coverImage}
             alt={property.title}
             className="card-image w-full h-full object-cover"
             loading="lazy"

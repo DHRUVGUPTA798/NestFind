@@ -245,13 +245,38 @@ export const mockProperties = [
   },
 ]
 
-export const mockUser = {
-  id: 'u1',
-  name: 'Aarav Joshi',
-  email: 'aarav.joshi@email.com',
-  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80&fit=crop',
-  role: 'tenant',
-  phone: '+91 98765 43210',
-  wishlist: [],
-  joinedAt: '2026-01-15',
+const additionalListings = [
+  ['7', 'Sunny private room near Manyata Tech Park', 'room', 'Private Room', 10500, 'Bengaluru', 'Hebbal', 1, 1, 290, 'semi-furnished', 'photo-1616486338812-3dadae4b4ace'],
+  ['8', 'Shared twin room in a managed co-living home', 'room', 'Shared Room', 7200, 'Pune', 'Viman Nagar', 1, 1, 180, 'fully-furnished', 'photo-1616486029423-aaa4789e8c9a'],
+  ['9', 'Compact studio beside HUDA City Centre', 'flat', 'Studio Apartment', 22000, 'Gurugram', 'Sector 41', 1, 1, 510, 'semi-furnished', 'photo-1600210492486-724fe5c67fb0'],
+  ['10', 'Bright 1BHK close to metro and markets', 'flat', '1BHK Apartment', 18500, 'Delhi', 'Lajpat Nagar', 1, 1, 680, 'semi-furnished', 'photo-1600607687939-ce8a6c25118c'],
+  ['11', 'Renovated 2BHK with balcony and parking', 'flat', '2BHK Apartment', 28500, 'Hyderabad', 'Kondapur', 2, 2, 1120, 'fully-furnished', 'photo-1600607687920-4e2a09cf159d'],
+  ['12', 'Family-ready 3BHK in a gated community', 'flat', '3BHK Apartment', 42000, 'Noida', 'Sector 50', 3, 2, 1580, 'semi-furnished', 'photo-1600566753086-00f18fb6b3ea'],
+  ['13', 'Independent home with a quiet courtyard', 'house', 'Independent House', 36000, 'Jaipur', 'Vaishali Nagar', 2, 2, 1420, 'fully-furnished', 'photo-1600607687920-4e2a09cf159d'],
+  ['14', 'Modern duplex with private terrace', 'house', 'Independent House', 56000, 'Bengaluru', 'Sarjapur Road', 3, 3, 1980, 'semi-furnished', 'photo-1600585154340-be6161a56a0c'],
+  ['15', 'Clean women-only PG with meals and Wi-Fi', 'pg', 'PG / Hostel', 12500, 'Mumbai', 'Andheri East', 1, 1, 230, 'fully-furnished', 'photo-1555854877-bab0e564b8d5'],
+  ['16', 'Affordable co-living room near Hinjawadi Phase 1', 'pg', 'PG / Hostel', 9800, 'Pune', 'Hinjawadi', 1, 1, 205, 'fully-furnished', 'photo-1564078516393-cf04bd966897'],
+  ['17', 'Well-lit 1BHK near Gachibowli offices', 'flat', '1BHK Apartment', 19500, 'Hyderabad', 'Manikonda', 1, 1, 720, 'unfurnished', 'photo-1600566753190-17f0baa2a6c3'],
+  ['18', 'Spacious 2BHK with open views and lift', 'flat', '2BHK Apartment', 33500, 'Mumbai', 'Chembur', 2, 2, 1040, 'semi-furnished', 'photo-1600607687644-c7171b42498f'],
+]
+
+const additionalGalleryPhotos = [
+  'photo-1600607687920-4e2a09cf159d', 'photo-1600566753376-12c8ab7fb75b', 'photo-1600607687939-ce8a6c2518c',
+  'photo-1600210492486-724fe5c67fb0', 'photo-1600566753086-00f18fb6b3ea', 'photo-1600566753190-17f0baa2a6c3',
+  'photo-1600566753376-12c8ab7fb75b', 'photo-1600607687920-4e2a09cf159d', 'photo-1564078516393-cf04bd966897',
+  'photo-1600210492486-724fe5c67fb0', 'photo-1600607687939-ce8a6c2518c', 'photo-1600566753086-00f18fb6b3ea',
+]
+
+for (const [index, [id, title, type, propertyTypeName, price, city, area, bedrooms, bathrooms, size, furnished, photo]] of additionalListings.entries()) {
+  mockProperties.push({
+    id, title, type, propertyTypeName, price, deposit: price * 2,
+    location: { city, area, address: `${area}, ${city}`, lat: null, lng: null },
+    bedrooms, bathrooms, area: size, furnished,
+    furnishedLabel: furnished.replace('-', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase()),
+    images: [`https://images.unsplash.com/${photo}?w=900&q=85&fit=crop`, `https://images.unsplash.com/${additionalGalleryPhotos[index]}?w=900&q=85&fit=crop`],
+    amenities: ['wifi', 'security', 'parking'], rating: null, reviewCount: 0, isVerified: false, isAvailable: true,
+    postedAt: '2026-11-12',
+    owner: { id: `owner-${id}`, name: 'NextFind Demo Host', avatar: '', responseRate: 95, verifiedOwner: false },
+    description: `${title}. A well-maintained rental in ${area}, with practical amenities and convenient access to everyday essentials.`,
+  })
 }

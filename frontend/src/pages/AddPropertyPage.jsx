@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
   CheckCircle2, ArrowLeft, ArrowRight, AlertCircle
@@ -7,6 +7,7 @@ import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
 import { propertyService } from '../services/propertyService'
 import { useAuth } from '../context/AuthContext'
+import { imageService } from '../services/imageService'
 
 const AMENITY_LIST = [
   { id: 'wifi', label: 'High-speed WiFi' },
@@ -40,14 +41,15 @@ export default function AddPropertyPage() {
   const [furnishing, setFurnishing] = useState('fully-furnished')
   const [description, setDescription] = useState('')
   const [selectedAmenities, setSelectedAmenities] = useState(['wifi', 'security', 'parking'])
-  const [selectedImages, setSelectedImages] = useState([
-    'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80&fit=crop',
-    'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80&fit=crop',
-  ])
+  const [selectedImages, setSelectedImages] = useState([])
+  const [primaryImageId, setPrimaryImageId] = useState(null)
+  const previewUrls = useRef(new Set())
   const [imageUrlInput, setImageUrlInput] = useState('')
   const [isSuccess, setIsSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+
+  useEffect(() => () => previewUrls.current.forEach((url) => URL.revokeObjectURL(url)), [])
 
   const toggleAmenity = (id) => {
     setSelectedAmenities(prev =>
@@ -57,10 +59,53 @@ export default function AddPropertyPage() {
 
   const handleAddImageUrl = (e) => {
     e.preventDefault()
-    if (imageUrlInput.trim()) {
-      setSelectedImages(prev => [...prev, imageUrlInput.trim()])
+    try {
+      const url = new URL(imageUrlInput.trim())
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Use a public HTTP or HTTPS image URL.')
+      if (selectedImages.length >= 10) throw new Error('A listing can include up to 10 photos.')
+      const image = { id: crypto.randomUUID(), kind: 'url', src: url.href, name: 'Hosted image' }
+      setSelectedImages((previous) => [...previous, image])
+      setPrimaryImageId((current) => current || image.id)
       setImageUrlInput('')
+      setFormError('')
+    } catch (error) {
+      setFormError(error.message || 'Enter a valid image URL.')
     }
+  }
+
+  const handleSelectImages = (event) => {
+    const files = Array.from(event.target.files || [])
+    event.target.value = ''
+    if (selectedImages.length + files.length > 10) {
+      setFormError('A listing can include up to 10 photos.')
+      return
+    }
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    const invalid = files.find((file) => !allowedTypes.includes(file.type) || file.size > 10 * 1024 * 1024)
+    if (invalid) {
+      setFormError(invalid.size > 10 * 1024 * 1024
+        ? `${invalid.name} is larger than the 10 MB limit.`
+        : `${invalid.name} is not a JPG, PNG or WebP image.`)
+      return
+    }
+    const additions = files.map((file) => {
+      const preview = URL.createObjectURL(file)
+      previewUrls.current.add(preview)
+      return { id: crypto.randomUUID(), kind: 'file', file, preview, name: file.name }
+    })
+    setSelectedImages((previous) => [...previous, ...additions])
+    setPrimaryImageId((current) => current || additions[0]?.id || null)
+    setFormError('')
+  }
+
+  const removeSelectedImage = (image) => {
+    if (image.preview) {
+      URL.revokeObjectURL(image.preview)
+      previewUrls.current.delete(image.preview)
+    }
+    const remaining = selectedImages.filter((item) => item.id !== image.id)
+    setSelectedImages(remaining)
+    if (primaryImageId === image.id) setPrimaryImageId(remaining[0]?.id || null)
   }
 
   const handleNextStep = (e) => {
@@ -85,11 +130,11 @@ export default function AddPropertyPage() {
   const handleFinalSubmit = async (e) => {
     e.preventDefault()
     setFormError('')
-    if (!title.trim() || !area.trim() || !address.trim() || !city || !propertyType ||
+    if (!title.trim() || !area.trim() || !address.trim() || !city || !propertyType || !selectedImages.length ||
       !Number.isFinite(Number(price)) || Number(price) <= 0 ||
       !Number.isFinite(Number(superArea)) || Number(superArea) <= 0) {
-      setFormError('Complete all required property details before publishing.')
-      setCurrentStep(!title.trim() || !area.trim() || !address.trim() ? 1 : 2)
+      setFormError(selectedImages.length ? 'Complete all required property details before publishing.' : 'Add at least one property photo before publishing.')
+      setCurrentStep(!title.trim() || !area.trim() || !address.trim() ? 1 : selectedImages.length ? 2 : 3)
       return
     }
 
@@ -107,7 +152,7 @@ export default function AddPropertyPage() {
       area: Number(superArea),
       furnished: furnishing,
       furnishedLabel: furnishingNames[furnishing],
-      images: selectedImages,
+      images: [],
       amenities: selectedAmenities,
       description: description.trim(),
       owner: {
@@ -121,6 +166,12 @@ export default function AddPropertyPage() {
 
     setIsSubmitting(true)
     try {
+      const uploadedFiles = selectedImages.filter((image) => image.kind === 'file')
+      const uploadedReferences = await imageService.upload(uploadedFiles.map((image) => image.file))
+      let fileIndex = 0
+      listing.images = selectedImages.map((image) => image.kind === 'file' ? uploadedReferences[fileIndex++] : image.src)
+      const primaryIndex = selectedImages.findIndex((image) => image.id === primaryImageId)
+      if (primaryIndex > 0) listing.images.unshift(listing.images.splice(primaryIndex, 1)[0])
       const result = await propertyService.createProperty(listing)
       if (!result?.data?.id) throw new Error('The listing could not be confirmed.')
       setIsSuccess(true)
@@ -438,7 +489,12 @@ export default function AddPropertyPage() {
 
                   <div>
                     <label className="text-xs font-bold uppercase tracking-wider text-stone-600 block mb-2">
-                      Property Photographs (URLs)
+                      Property Photographs
+                    </label>
+                    <p className="mb-3 text-xs text-stone-500">Upload up to 10 JPG, PNG or WebP images, 10 MB each. Files stay in this browser until backend image storage is connected.</p>
+                    <label className="mb-3 inline-flex cursor-pointer items-center rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 text-xs font-bold text-brand-800 hover:bg-brand-100 focus-within:ring-2 focus-within:ring-brand-500">
+                      Choose photos from device
+                      <input type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={handleSelectImages} className="sr-only" aria-label="Choose property photos" />
                     </label>
                     <div className="flex gap-2 mb-3">
                       <input
@@ -457,14 +513,18 @@ export default function AddPropertyPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                      {selectedImages.map((src, i) => (
-                        <div key={i} className="relative rounded-xl overflow-hidden aspect-[4/3] border border-stone-200 group">
-                          <img src={src} alt="Upload preview" className="w-full h-full object-cover" />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {selectedImages.map((image) => (
+                        <div key={image.id} className="relative rounded-xl overflow-hidden aspect-[4/3] border border-stone-200 group">
+                          <img src={image.preview || image.src} alt={image.name} className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => setPrimaryImageId(image.id)} aria-pressed={primaryImageId === image.id} className="absolute left-1 top-1 rounded-md bg-white/95 px-2 py-1 text-[10px] font-bold text-stone-800 shadow-sm">
+                            {primaryImageId === image.id ? 'Cover photo' : 'Set as cover'}
+                          </button>
                           <button
                             type="button"
-                            onClick={() => setSelectedImages(prev => prev.filter((_, idx) => idx !== i))}
-                            className="absolute top-1 right-1 size-6 rounded-full bg-black/60 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => removeSelectedImage(image)}
+                            aria-label={`Remove ${image.name}`}
+                            className="absolute top-1 right-1 size-7 rounded-full bg-black/70 text-white text-sm flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                           >
                             ✕
                           </button>
