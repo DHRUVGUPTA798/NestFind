@@ -252,6 +252,6 @@ export const mockUser = {
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80&fit=crop',
   role: 'tenant',
   phone: '+91 98765 43210',
-  wishlist: ['1', '3'],
+  wishlist: [],
   joinedAt: '2026-01-15',
 }

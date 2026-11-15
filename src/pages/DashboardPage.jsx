@@ -3,31 +3,33 @@ import { Link } from 'react-router-dom'
 import { Mail, Phone, Calendar, Heart, ArrowRight } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useWishlist } from '../context/WishlistContext'
-import { mockUser, mockProperties } from '../data/mock/properties'
+import { mockUser } from '../data/mock/properties'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import { formatRupee } from '../components/property/PropertyCard'
 import Button from '../components/ui/Button'
 
 export default function DashboardPage() {
   const { user } = useAuth()
   const { wishlist } = useWishlist()
+  const properties = usePropertyCatalog()
 
   // Use authenticated user or fallback to standard demo user profile
   const currentUser = user || mockUser
 
-  const savedListings = mockProperties.filter(p => wishlist.includes(p.id))
+  const savedListings = properties.filter(p => wishlist.includes(p.id))
 
   // Scheduled Visits for Tenant
   const scheduledVisits = [
     {
       id: 'sv-1',
-      property: mockProperties[0],
+      property: properties.find((property) => property.id === '1'),
       date: '2026-11-16',
       time: '11:30 AM',
       status: 'Confirmed by Landlord',
     },
     {
       id: 'sv-2',
-      property: mockProperties[1],
+      property: properties.find((property) => property.id === '2'),
       date: '2026-11-19',
       time: '4:00 PM',
       status: 'Awaiting Confirmation',

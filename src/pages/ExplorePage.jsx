@@ -4,7 +4,7 @@ import {
   Search, SlidersHorizontal, RotateCcw, Building2,
   Wifi, Wind, Car, Dumbbell, Shield, ArrowUpDown, X
 } from 'lucide-react'
-import { mockProperties } from '../data/mock/properties'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import PropertyCard from '../components/property/PropertyCard'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
@@ -34,6 +34,7 @@ const AMENITY_OPTIONS = [
 
 export default function ExplorePage() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const properties = usePropertyCatalog()
 
   // Read URL query params as initial filters
   const cityParam = searchParams.get('city') || searchParams.get('location') || ''
@@ -103,7 +104,7 @@ export default function ExplorePage() {
 
   // Filter & Sort Logic
   const filteredProperties = useMemo(() => {
-    let result = [...mockProperties]
+    let result = [...properties]
 
     // Location / City / Area Search
     if (searchTerm.trim()) {
@@ -161,7 +162,7 @@ export default function ExplorePage() {
 
     return result
   }, [
-    searchTerm, selectedType, priceRange, minBedrooms,
+    properties, searchTerm, selectedType, priceRange, minBedrooms,
     furnishing, selectedAmenities, verifiedOnly, sortBy
   ])
 

@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import {
-  Building2, MapPin, Upload, CheckCircle2, DollarSign,
-  Bed, Bath, Square, Shield, Eye, ArrowLeft, ArrowRight,
-  Wifi, Wind, Car, Shirt, Dumbbell, Zap, Trees, AlertCircle
+  CheckCircle2, ArrowLeft, ArrowRight, AlertCircle
 } from 'lucide-react'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
+import { propertyService } from '../services/propertyService'
+import { useAuth } from '../context/AuthContext'
 
 const AMENITY_LIST = [
   { id: 'wifi', label: 'High-speed WiFi' },
@@ -21,6 +21,7 @@ const AMENITY_LIST = [
 
 export default function AddPropertyPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   // Multi-step Form State
   const [currentStep, setCurrentStep] = useState(1) // 1: Info, 2: Specs & Pricing, 3: Photos & Amenities, 4: Review
@@ -45,6 +46,7 @@ export default function AddPropertyPage() {
   ])
   const [imageUrlInput, setImageUrlInput] = useState('')
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
 
   const toggleAmenity = (id) => {
@@ -71,8 +73,8 @@ export default function AddPropertyPage() {
         return
       }
     } else if (currentStep === 2) {
-      if (!price || !superArea) {
-        setFormError('Please specify the monthly rent and square footage.')
+      if (!Number.isFinite(Number(price)) || Number(price) <= 0 || !Number.isFinite(Number(superArea)) || Number(superArea) <= 0) {
+        setFormError('Enter a monthly rent and square footage greater than zero.')
         return
       }
     }
@@ -80,12 +82,54 @@ export default function AddPropertyPage() {
     setCurrentStep(prev => prev + 1)
   }
 
-  const handleFinalSubmit = (e) => {
+  const handleFinalSubmit = async (e) => {
     e.preventDefault()
-    setIsSuccess(true)
-    setTimeout(() => {
-      navigate('/owner/dashboard')
-    }, 2500)
+    setFormError('')
+    if (!title.trim() || !area.trim() || !address.trim() || !city || !propertyType ||
+      !Number.isFinite(Number(price)) || Number(price) <= 0 ||
+      !Number.isFinite(Number(superArea)) || Number(superArea) <= 0) {
+      setFormError('Complete all required property details before publishing.')
+      setCurrentStep(!title.trim() || !area.trim() || !address.trim() ? 1 : 2)
+      return
+    }
+
+    const typeNames = { room: 'Room', flat: 'Apartment', house: 'Independent House', pg: 'PG / Hostel' }
+    const furnishingNames = { 'fully-furnished': 'Fully Furnished', 'semi-furnished': 'Semi Furnished', unfurnished: 'Unfurnished' }
+    const listing = {
+      title: title.trim(),
+      type: propertyType,
+      propertyTypeName: typeNames[propertyType],
+      price: Number(price),
+      deposit: Number(deposit) || 0,
+      location: { city, area: area.trim(), address: address.trim(), lat: null, lng: null },
+      bedrooms: Number(bedrooms),
+      bathrooms: Number(bathrooms),
+      area: Number(superArea),
+      furnished: furnishing,
+      furnishedLabel: furnishingNames[furnishing],
+      images: selectedImages,
+      amenities: selectedAmenities,
+      description: description.trim(),
+      owner: {
+        id: user?.id || 'demo-owner',
+        name: user?.name || 'NextFind Demo Owner',
+        avatar: user?.avatar,
+        responseRate: 100,
+        verifiedOwner: false,
+      },
+    }
+
+    setIsSubmitting(true)
+    try {
+      const result = await propertyService.createProperty(listing)
+      if (!result?.data?.id) throw new Error('The listing could not be confirmed.')
+      setIsSuccess(true)
+      setTimeout(() => navigate('/owner/dashboard'), 1200)
+    } catch (error) {
+      setFormError(error?.message || 'We could not save this listing. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -470,8 +514,9 @@ export default function AddPropertyPage() {
                   type="submit"
                   variant={currentStep === 4 ? 'emerald' : 'primary'}
                   size="md"
+                  disabled={isSubmitting}
                 >
-                  {currentStep === 4 ? 'Publish Listing Live' : 'Continue to Next Step'}
+                  {isSubmitting ? 'Saving Listing…' : currentStep === 4 ? 'Publish Listing' : 'Continue to Next Step'}
                   <ArrowRight size={14} className="ml-1" />
                 </Button>
               </div>

@@ -1,23 +1,23 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import {
-  Building2, PlusCircle, CheckCircle2, Clock, Users,
-  TrendingUp, Eye, Edit3, Trash2, Shield, AlertCircle,
-  Calendar, MessageSquare, ArrowRight, DollarSign
+  Building2, PlusCircle, CheckCircle2, Users, Eye, Trash2,
+  Calendar, ArrowRight, DollarSign
 } from 'lucide-react'
-import { mockProperties } from '../data/mock/properties'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
+import { propertyService } from '../services/propertyService'
+import { useAuth } from '../context/AuthContext'
 import { formatRupee } from '../components/property/PropertyCard'
 import Button from '../components/ui/Button'
 import { cn } from '../utils/cn'
 
 export default function OwnerDashboardPage() {
-  const navigate = useNavigate()
-
-  // Track landlord's properties
-  const [ownerListings, setOwnerListings] = useState([
-    mockProperties[0], // 2BHK Indiranagar
-    mockProperties[2], // 3BHK Villa Pune
-  ])
+  const { user } = useAuth()
+  const properties = usePropertyCatalog()
+  const ownerListings = properties.filter((property) =>
+    property.owner?.id === (user?.id || 'demo-owner') ||
+    (!user && (property.id === '1' || property.id === '3'))
+  )
 
   // Mock Tenant Inquiries / Visit Requests
   const [inquiries, setInquiries] = useState([
@@ -43,15 +43,15 @@ export default function OwnerDashboardPage() {
     },
   ])
 
-  const togglePropertyStatus = (id) => {
-    setOwnerListings(prev =>
-      prev.map(item => item.id === id ? { ...item, isAvailable: !item.isAvailable } : item)
-    )
+  const togglePropertyStatus = async (id) => {
+    const property = ownerListings.find((item) => item.id === id)
+    if (!property) return
+    await propertyService.updateProperty(id, { isAvailable: !property.isAvailable })
   }
 
-  const handleDeleteListing = (id) => {
+  const handleDeleteListing = async (id) => {
     if (window.confirm('Are you sure you want to remove this property listing?')) {
-      setOwnerListings(prev => prev.filter(item => item.id !== id))
+      await propertyService.deleteProperty(id)
     }
   }
 

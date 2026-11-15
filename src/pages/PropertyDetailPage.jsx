@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import {
   MapPin, Star, Bed, Bath, Square, Shield, CheckCircle2,
-  Heart, Share2, Calendar, MessageSquare, Phone,
-  ArrowLeft, Check, Sparkles, Building2, UserCheck, Clock,
+  Heart, Share2, Calendar, MessageSquare,
+  ArrowLeft, Building2,
   Wifi, Wind, Car, Shirt, Dumbbell, Zap, Trees, ChevronRight
 } from 'lucide-react'
-import { mockProperties } from '../data/mock/properties'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import { useWishlist } from '../context/WishlistContext'
 import { PropertyDetailSkeleton } from '../components/ui/Skeleton'
 import PropertyCard, { formatRupee } from '../components/property/PropertyCard'
@@ -30,6 +30,7 @@ export default function PropertyDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { toggle, isWishlisted } = useWishlist()
+  const properties = usePropertyCatalog()
 
   const [property, setProperty] = useState(null)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
@@ -40,13 +41,13 @@ export default function PropertyDetailPage() {
 
   // Find Property
   useEffect(() => {
-    const found = mockProperties.find(p => p.id === id)
+    const found = properties.find(p => p.id === id)
     if (found) {
       setProperty(found)
       setActiveImageIndex(0)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }, [id])
+  }, [id, properties])
 
   if (!property) {
     return (
@@ -59,7 +60,7 @@ export default function PropertyDetailPage() {
   const wishlisted = isWishlisted(property.id)
 
   // Similar properties from same or other cities
-  const similarProperties = mockProperties
+  const similarProperties = properties
     .filter(p => p.id !== property.id && (p.type === property.type || p.location.city === property.location.city))
     .slice(0, 3)
 
@@ -144,7 +145,9 @@ export default function PropertyDetailPage() {
             <span className="text-stone-300">•</span>
             <span className="flex items-center gap-1">
               <Star size={13} className="text-amber-500 fill-amber-500" />
-              <strong className="text-stone-900">{property.rating}</strong> ({property.reviewCount || 24} tenant reviews)
+              {property.rating && property.reviewCount > 0
+                ? <><strong className="text-stone-900">{property.rating}</strong> ({property.reviewCount} tenant reviews)</>
+                : <span className="text-stone-500">No reviews yet</span>}
             </span>
           </div>
         </div>
@@ -256,9 +259,11 @@ export default function PropertyDetailPage() {
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-sm font-extrabold text-stone-900">{property.owner.name}</h3>
-                    <span className="px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold">
-                      Verified Landlord
-                    </span>
+                    {property.owner.verifiedOwner && (
+                      <span className="px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold">
+                        Verified Landlord
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-stone-500 mt-0.5">
                     Response rate: <strong className="text-stone-800">{property.owner.responseRate}%</strong> · Typically replies within 1 hour
@@ -300,7 +305,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="flex justify-between">
                   <span>Security Deposit:</span>
-                  <strong className="text-stone-900">{formatRupee(property.deposit || property.price * 2)}</strong>
+                  <strong className="text-stone-900">{property.deposit ? formatRupee(property.deposit) : 'Not specified'}</strong>
                 </div>
                 <div className="flex justify-between">
                   <span>Maintenance:</span>

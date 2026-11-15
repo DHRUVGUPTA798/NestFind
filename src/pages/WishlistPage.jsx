@@ -1,19 +1,20 @@
 import React, { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Heart, ArrowRight, Search } from 'lucide-react'
-import { mockProperties } from '../data/mock/properties'
 import { useWishlist } from '../context/WishlistContext'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import PropertyCard from '../components/property/PropertyCard'
 import Button from '../components/ui/Button'
 
 export default function WishlistPage() {
   const navigate = useNavigate()
   const { wishlist } = useWishlist()
+  const properties = usePropertyCatalog()
 
   // Match saved IDs against properties
   const savedProperties = useMemo(() => {
-    return mockProperties.filter(p => wishlist.includes(p.id))
-  }, [wishlist])
+    return properties.filter(p => wishlist.includes(p.id))
+  }, [properties, wishlist])
 
   return (
     <div className="bg-stone-50 min-h-[calc(100vh-72px)] py-8 sm:py-12 page-enter">

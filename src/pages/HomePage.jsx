@@ -4,7 +4,7 @@ import {
   Search, MapPin, ChevronRight, Shield, CheckCircle2,
   Heart, ArrowRight, Building2, Check, Clock, UserCheck
 } from 'lucide-react'
-import { mockProperties } from '../data/mock/properties'
+import { usePropertyCatalog } from '../hooks/usePropertyCatalog'
 import PropertyCard, { formatRupee } from '../components/property/PropertyCard'
 import { cn } from '../utils/cn'
 
@@ -56,8 +56,8 @@ const FILTER_TABS = [
   { label: 'PGs', value: 'pg' },
 ]
 
-function categoryPriceLabel(type) {
-  const prices = mockProperties.filter((property) => property.type === type).map((property) => property.price)
+function categoryPriceLabel(type, properties) {
+  const prices = properties.filter((property) => property.type === type).map((property) => property.price)
   if (!prices.length) return 'Explore available options'
   return `From ${formatRupee(Math.min(...prices))}/mo`
 }
@@ -71,9 +71,10 @@ function ListingCard({ property }) {
 
 export default function HomePage() {
   const navigate = useNavigate()
-  const featuredProperty = mockProperties.find((property) => property.id === '3') || mockProperties[0]
-  const cityCount = new Set(mockProperties.map((property) => property.location.city)).size
-  const categoryCount = new Set(mockProperties.map((property) => property.type)).size
+  const properties = usePropertyCatalog()
+  const featuredProperty = properties.find((property) => property.id === '3') || properties[0]
+  const cityCount = new Set(properties.map((property) => property.location.city)).size
+  const categoryCount = new Set(properties.map((property) => property.type)).size
 
   // Search form states
   const [searchLocation, setSearchLocation] = useState('')
@@ -94,9 +95,9 @@ export default function HomePage() {
 
   // Filter listings
   const filteredListings = useMemo(() => {
-    if (activeFilter === 'all') return mockProperties
-    return mockProperties.filter(item => item.type === activeFilter)
-  }, [activeFilter])
+    if (activeFilter === 'all') return properties
+    return properties.filter(item => item.type === activeFilter)
+  }, [activeFilter, properties])
 
   return (
     <div className="page-enter">
@@ -332,7 +333,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center divide-y md:divide-y-0 md:divide-x divide-white/10">
             <div className="pt-2 md:pt-0">
               <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-0.5">
-                {mockProperties.length}
+                {properties.length}
               </p>
               <p className="text-xs font-semibold text-stone-300 uppercase tracking-wider">
                 Preview listings
@@ -419,7 +420,7 @@ export default function HomePage() {
                 {/* Price Pill Tag on Top */}
                 <div className="absolute top-3.5 left-3.5">
                   <span className="px-2.5 py-1 rounded-md bg-white/95 text-stone-900 text-[10px] font-bold shadow-xs">
-                    {categoryPriceLabel(cat.type)}
+                    {categoryPriceLabel(cat.type, properties)}
                   </span>
                 </div>
 
